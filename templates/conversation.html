@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - Conversation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            height: calc(100vh - 50px);
+            padding: 20px;
+        }
+
+        .conversation {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+        }
+
+        .conversation-window {
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+
+        .message-input {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        .message-input input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .message-input button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .message-input button:hover {
+            background-color: #0056b3;
+        }
+
+        .project-details {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .agent-selection {
+            margin-bottom: 10px;
+        }
+
+        .agent-selection label,
+        .agent-selection select {
+            display: block;
+            width: 100%;
+        }
+
+        .agent-selection select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        header {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background-color: #007bff;
+            color: white;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .message-bubble {
+            border-radius: 20px;
+            padding: 10px;
+            margin: 5px;
+            display: inline-block;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message-bubble.user {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .message-bubble.agent {
+            background-color: #f1f0f0;
+            color: black;
+            align-self: flex-start;
+        }
+
+        .timestamp {
+            font-size: 0.8em;
+            color: grey;
+        }
+
+        .avatar {
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar img {
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{ project.name }}</h1>
+        <a href="{{ url_for('chat') }}">Back to Projects</a>
+    </header>
+    <div class="container">
+        <div class="conversation">
+            <div class="agent-selection">
+                <label for="agent">Send message to:</label>
+                <select id="agent" name="agent">
+                    <option value="">Select an agent</option>
+                    {% for agent in agents %}
+                        <option value="{{ agent.id }}">{{ agent.name }} ({{ agent.model }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="conversation-window" id="conversation-window">
+                {% for message in messages %}
+                    <div class="message-bubble {% if message.user_id %}user{% else %}agent{% endif %}">
+                        {% if message.agent_id %}
+                            <div class="avatar">
+                                <img src="https://via.placeholder.com/30" alt="{{ message.agent.name }}'s avatar">
+                                <strong>{{ message.agent.name }} ({{ message.agent.model }})</strong>
+                            </div>
+                        {% endif %}
+                        <p>{{ message.text }}</p>
+                        <span class="timestamp">{{ message.timestamp.strftime('%d/%m/%Y, %H:%M:%S') }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="message-input">
+                <input type="text" id="message" placeholder="Type your message here">
+                <button type="button" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        <div class="project-details">
+            <h2>Project Details</h2>
+            <p>Name: {{ project.name }}</p>
+            <p>Objectives: {{ project.objectives }}</p>
+            <p>Goals: {{ project.goals }}</p>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            const agent = document.getElementById('agent').value;
+            const project_id = {{ project.id }};
+            const csrf_token = '{{ csrf_token() }}';
+
+            if (message.trim() !== '' && agent) {
+                fetch("{{ url_for('send_message') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrf_token
+                    },
+                    body: JSON.stringify({
+                        project_id: project_id,
+                        agent_id: agent,
+                        message: message
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.reply) {
+                        const conversationWindow = document.getElementById('conversation-window');
+                        const userMessage = document.createElement('div');
+                        userMessage.className = 'message-bubble user';
+                        userMessage.innerHTML = `<p>${message}</p><span class="timestamp">${new Date().toLocaleString()}</span>`;
+                        conversationWindow.appendChild(userMessage);
+
+                        const agentMessage = document.createElement('div');
+                        agentMessage.className = 'message-bubble agent';
+                        agentMessage.innerHTML = `<p>${data.reply}</p><span class="timestamp">${new Date().toLocaleString()}</span>`;
+                        conversationWindow.appendChild(agentMessage);
+
+                        conversationWindow.scrollTop = conversationWindow.scrollHeight;
+                        document.getElementById('message').value = '';
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        document.getElementById('message').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
