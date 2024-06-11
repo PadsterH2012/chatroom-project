@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ project.name }} - Conversation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
     <style>
         body {
             display: flex;
@@ -69,22 +72,6 @@
             background-color: #f9f9f9;
         }
 
-        .agent-selection {
-            margin-bottom: 10px;
-        }
-
-        .agent-selection label,
-        .agent-selection select {
-            display: block;
-            width: 100%;
-        }
-
-        .agent-selection select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
         header {
             height: 50px;
             display: flex;
@@ -100,43 +87,82 @@
             text-decoration: none;
         }
 
-        .message-bubble {
-            border-radius: 20px;
-            padding: 10px;
-            margin: 5px;
-            display: inline-block;
-            max-width: 70%;
-            word-wrap: break-word;
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
         }
 
-        .message-bubble.user {
-            background-color: #007bff;
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: #007bff;
             color: white;
-            align-self: flex-end;
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-size: 12px;
         }
 
-        .message-bubble.agent {
-            background-color: #f1f0f0;
-            color: black;
-            align-self: flex-start;
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .copy-button:hover {
+            background: #0056b3;
+        }
+
+        .message {
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            background-color: #d1ecf1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .agent-message {
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .agent-name {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
         }
 
         .timestamp {
-            font-size: 0.8em;
-            color: grey;
-        }
-
-        .avatar {
-            display: flex;
-            align-items: center;
-        }
-
-        .avatar img {
-            border-radius: 50%;
-            margin-right: 10px;
+            display: block;
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>{{ project.name }}</h1>
@@ -149,88 +175,145 @@
                 <select id="agent" name="agent">
                     <option value="">Select an agent</option>
                     {% for agent in agents %}
-                        <option value="{{ agent.id }}">{{ agent.name }} ({{ agent.model }})</option>
+                    <option value="{{ agent.id }}">{{ agent.name }} ({{ agent.model }})</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="conversation-window" id="conversation-window">
                 {% for message in messages %}
-                    <div class="message-bubble {% if message.user_id %}user{% else %}agent{% endif %}">
-                        {% if message.agent_id %}
-                            <div class="avatar">
-                                <img src="https://via.placeholder.com/30" alt="{{ message.agent.name }}'s avatar">
-                                <strong>{{ message.agent.name }} ({{ message.agent.model }})</strong>
-                            </div>
-                        {% endif %}
-                        <p>{{ message.text }}</p>
-                        <span class="timestamp">{{ message.timestamp.strftime('%d/%m/%Y, %H:%M:%S') }}</span>
-                    </div>
+                <div class="message {{ 'agent-message' if message.agent_id else 'user-message' }}">
+                    {% if message.agent %}
+                    <div class="agent-name">{{ message.agent.name }}</div>
+                    {% endif %}
+                    <span>{{ message.text|safe }}</span>
+                    <span class="timestamp">{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                </div>
                 {% endfor %}
             </div>
             <div class="message-input">
-                <input type="text" id="message" placeholder="Type your message here">
+                <input type="text" id="message" placeholder="Type your message here" onkeydown="if(event.key === 'Enter') sendMessage()">
                 <button type="button" onclick="sendMessage()">Send</button>
             </div>
         </div>
         <div class="project-details">
             <h2>Project Details</h2>
             <p>Name: {{ project.name }}</p>
-            <p>Objectives: {{ project.objectives }}</p>
-            <p>Goals: {{ project.goals }}</p>
+            <p>Git URL: {{ project.git_url }}</p>
+            <form method="POST" action="{{ url_for('clone_project_repo', project_id=project.id) }}">
+                {{ edit_git_url_form.hidden_tag() }}
+                <button type="submit">Clone Repository</button>
+            </form>
+            <form method="POST" action="{{ url_for('ingest_repo', project_id=project.id) }}">
+                {{ edit_git_url_form.hidden_tag() }}
+                <button type="submit">Ingest Repository</button>
+            </form>
         </div>
     </div>
-
     <script>
-        function sendMessage() {
-            const message = document.getElementById('message').value;
-            const agent = document.getElementById('agent').value;
-            const project_id = {{ project.id }};
-            const csrf_token = '{{ csrf_token() }}';
-
-            if (message.trim() !== '' && agent) {
-                fetch("{{ url_for('send_message') }}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": csrf_token
-                    },
-                    body: JSON.stringify({
-                        project_id: project_id,
-                        agent_id: agent,
-                        message: message
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.reply) {
-                        const conversationWindow = document.getElementById('conversation-window');
-                        const userMessage = document.createElement('div');
-                        userMessage.className = 'message-bubble user';
-                        userMessage.innerHTML = `<p>${message}</p><span class="timestamp">${new Date().toLocaleString()}</span>`;
-                        conversationWindow.appendChild(userMessage);
-
-                        const agentMessage = document.createElement('div');
-                        agentMessage.className = 'message-bubble agent';
-                        agentMessage.innerHTML = `<p>${data.reply}</p><span class="timestamp">${new Date().toLocaleString()}</span>`;
-                        conversationWindow.appendChild(agentMessage);
-
-                        conversationWindow.scrollTop = conversationWindow.scrollHeight;
-                        document.getElementById('message').value = '';
-                    } else if (data.error) {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const lastSelectedAgent = localStorage.getItem('lastSelectedAgent');
+            if (lastSelectedAgent) {
+                document.getElementById('agent').value = lastSelectedAgent;
             }
+
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+
+                // Add copy button
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-button';
+                copyButton.textContent = 'Copy';
+                copyButton.addEventListener('click', () => {
+                    navigator.clipboard.writeText(block.innerText).then(() => {
+                        alert('Code copied to clipboard!');
+                    }).catch(err => {
+                        console.error('Failed to copy code: ', err);
+                    });
+                });
+                block.parentElement.appendChild(copyButton);
+            });
+        });
+
+        document.getElementById('agent').addEventListener('change', (event) => {
+            const selectedAgent = event.target.value;
+            localStorage.setItem('lastSelectedAgent', selectedAgent);
+        });
+
+        function formatAIResponse(response) {
+            // Detect and format code blocks with language indication
+            const codeBlockPattern = /```(\w+)\n([\s\S]+?)```/g;
+            response = response.replace(codeBlockPattern, (match, lang, code) => {
+                return `<pre><code class="language-${lang}">${code}</code></pre>`;
+            });
+            return response;
         }
 
-        document.getElementById('message').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            const agentId = document.getElementById('agent').value;
+
+            if (message.trim() !== '' && agentId) {
+                const payload = {
+                    project_id: {{ project.id }},
+                    agent_id: agentId,
+                    message: message
+                };
+
+                fetch('{{ url_for('send_message') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Error:', data.error);
+                        } else {
+                            const conversationWindow = document.getElementById('conversation-window');
+
+                            // Append user message
+                            const userMessage = document.createElement('div');
+                            userMessage.classList.add('message', 'user-message');
+                            userMessage.innerHTML = `${message} <span class="timestamp">${new Date().toLocaleString()}</span>`;
+                            conversationWindow.appendChild(userMessage);
+
+                            // Append agent response
+                            const agentMessage = document.createElement('div');
+                            agentMessage.classList.add('message', 'agent-message');
+                            agentMessage.innerHTML = `<div class="agent-name">${data.agent_name}</div>${formatAIResponse(data.reply)}`;
+                            conversationWindow.appendChild(agentMessage);
+
+                            conversationWindow.scrollTop = conversationWindow.scrollHeight;
+                            document.getElementById('message').value = '';
+
+                            // Re-run highlight.js on new code blocks
+                            document.querySelectorAll('pre code').forEach((block) => {
+                                hljs.highlightBlock(block);
+
+                                // Add copy button
+                                const copyButton = document.createElement('button');
+                                copyButton.className = 'copy-button';
+                                copyButton.textContent = 'Copy';
+                                copyButton.addEventListener('click', () => {
+                                    navigator.clipboard.writeText(block.innerText).then(() => {
+                                        alert('Code copied to clipboard!');
+                                    }).catch(err => {
+                                        console.error('Failed to copy code: ', err);
+                                    });
+                                });
+                                block.parentElement.appendChild(copyButton);
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                alert('Please select an agent and type a message.');
             }
-        });
+        }
     </script>
 </body>
+
 </html>

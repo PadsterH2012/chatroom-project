@@ -17,14 +17,16 @@ class Project(db.Model):
     goals = db.Column(db.Text, nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
+    git_url = db.Column(db.String(256), nullable=True)
 
-    def __init__(self, name, description=None, objectives=None, goals=None, start_date=None, end_date=None):
+    def __init__(self, name, description=None, objectives=None, goals=None, start_date=None, end_date=None, git_url=None):
         self.name = name
         self.description = description
         self.objectives = objectives
         self.goals = goals
         self.start_date = start_date
         self.end_date = end_date
+        self.git_url = git_url
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -53,18 +55,66 @@ class Agent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
     model = db.Column(db.String(64), nullable=False)
+    is_openai = db.Column(db.Boolean, default=False)  # Specify if the agent is for OpenAI
 
-    def __init__(self, name, model):
+    def __init__(self, name, model, is_openai=False):
         self.name = name
         self.model = model
+        self.is_openai = is_openai
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'model': self.model,
+            'is_openai': self.is_openai
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return Agent(
+            name=data['name'],
+            model=data['model'],
+            is_openai=data.get('is_openai', False)
+        )
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ollama_url = db.Column(db.String(256), nullable=False)
     ollama_key = db.Column(db.String(256), nullable=False)
     model_name = db.Column(db.String(256), nullable=False)
+    chatgpt_url = db.Column(db.String(256), nullable=True)
+    chatgpt_key = db.Column(db.String(256), nullable=True)
+    chatgpt_model = db.Column(db.String(256), nullable=True)
+    openai_api_key = db.Column(db.String(256), nullable=True)
 
-    def __init__(self, ollama_url, ollama_key, model_name):
+    def __init__(self, ollama_url, ollama_key, model_name, chatgpt_url=None, chatgpt_key=None, chatgpt_model=None, openai_api_key=None):
         self.ollama_url = ollama_url
         self.ollama_key = ollama_key
         self.model_name = model_name
+        self.chatgpt_url = chatgpt_url
+        self.chatgpt_key = chatgpt_key
+        self.chatgpt_model = chatgpt_model
+        self.openai_api_key = openai_api_key
+
+    def to_dict(self):
+        return {
+            'ollama_url': self.ollama_url,
+            'ollama_key': self.ollama_key,
+            'model_name': self.model_name,
+            'chatgpt_url': self.chatgpt_url,
+            'chatgpt_key': self.chatgpt_key,
+            'chatgpt_model': self.chatgpt_model,
+            'openai_api_key': self.openai_api_key
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return Config(
+            ollama_url=data['ollama_url'],
+            ollama_key=data['ollama_key'],
+            model_name=data['model_name'],
+            chatgpt_url=data.get('chatgpt_url'),
+            chatgpt_key=data.get('chatgpt_key'),
+            chatgpt_model=data.get('chatgpt_model'),
+            openai_api_key=data.get('openai_api_key')
+        )

@@ -99,6 +99,22 @@
                 {{ settings_form.model_name }}
             </div>
             <div class="form-group">
+                {{ settings_form.chatgpt_url.label }}
+                {{ settings_form.chatgpt_url }}
+            </div>
+            <div class="form-group">
+                {{ settings_form.chatgpt_key.label }}
+                {{ settings_form.chatgpt_key }}
+            </div>
+            <div class="form-group">
+                {{ settings_form.chatgpt_model.label }}
+                {{ settings_form.chatgpt_model }}
+            </div>
+            <div class="form-group">
+                {{ settings_form.openai_api_key.label }}  <!-- Add this block -->
+                {{ settings_form.openai_api_key }}
+            </div>
+            <div class="form-group">
                 {{ settings_form.submit }}
             </div>
         </form>
@@ -113,6 +129,10 @@
             <div class="form-group">
                 {{ agent_form.model.label }}
                 {{ agent_form.model }}
+            </div>
+            <div class="form-group">
+                {{ agent_form.is_openai.label }}  <!-- Add this block -->
+                {{ agent_form.is_openai }}
             </div>
             <div class="form-group">
                 {{ agent_form.create_agent }}
@@ -133,6 +153,18 @@
                     </li>
                 {% endfor %}
             </ul>
+        </div>
+
+        <div>
+            <h2>Export/Import Settings</h2>
+            <form method="GET" action="{{ url_for('export_settings') }}">
+                <button type="submit">Export Settings</button>
+            </form>
+            <form method="POST" action="{{ url_for('import_settings') }}" enctype="multipart/form-data">
+                {{ settings_form.csrf_token }}
+                <input type="file" name="settings_file">
+                <button type="submit">Import Settings</button>
+            </form>
         </div>
 
         <div>
