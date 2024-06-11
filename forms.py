@@ -1,49 +1,49 @@
-# forms.py
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, IntegerField, BooleanField
-from wtforms.validators import DataRequired, EqualTo, Length
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, Length, Email, EqualTo
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
+    remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=25)])
-    password = PasswordField('Password', validators=[
-        DataRequired(),
-        Length(min=6),
-        EqualTo('confirm', message='Passwords must match')
-    ])
-    confirm = PasswordField('Repeat Password')
-    submit = SubmitField('Register')
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Sign Up')
 
 class ProjectForm(FlaskForm):
-    name = StringField('Project Name', validators=[DataRequired(), Length(min=1, max=100)])
-    git_url = StringField('Git URL', validators=[Length(max=256)])
+    name = StringField('Project Name', validators=[DataRequired()])
+    git_url = StringField('Git URL', validators=[DataRequired()])
     submit = SubmitField('Create Project')
 
 class DeleteProjectForm(FlaskForm):
-    id = IntegerField('Project ID', validators=[DataRequired()])
+    id = StringField('Project ID', validators=[DataRequired()])
     submit = SubmitField('Delete Project')
 
 class SettingsForm(FlaskForm):
-    ollama_url = StringField('Ollama URL', validators=[DataRequired(), Length(max=256)])
-    ollama_key = StringField('Ollama API Key', validators=[DataRequired(), Length(max=256)])
-    model_name = StringField('Model Name', validators=[DataRequired(), Length(max=256)])
-    chatgpt_url = StringField('ChatGPT URL', validators=[Length(max=256)])
-    chatgpt_key = StringField('ChatGPT API Key', validators=[Length(max=256)])
-    chatgpt_model = StringField('ChatGPT Model', validators=[Length(max=256)])
-    openai_api_key = StringField('OpenAI API Key', validators=[Length(max=256)])  # Add this line
-    submit = SubmitField('Save Settings')
+    ollama_url = StringField('Ollama URL', validators=[DataRequired()])
+    ollama_key = StringField('Ollama Key', validators=[DataRequired()])
+    model_name = StringField('Model Name', validators=[DataRequired()])
+    chatgpt_url = StringField('ChatGPT URL', validators=[DataRequired()])
+    chatgpt_key = StringField('ChatGPT Key', validators=[DataRequired()])
+    chatgpt_model = StringField('ChatGPT Model', validators=[DataRequired()])
+    openai_api_key = StringField('OpenAI API Key', validators=[DataRequired()])
+    submit = SubmitField('Update Settings')
 
 class AgentForm(FlaskForm):
-    name = StringField('Agent Name', validators=[DataRequired(), Length(min=1, max=64)])
-    model = StringField('Model', validators=[DataRequired(), Length(min=1, max=64)])
-    is_openai = BooleanField('Is OpenAI')  # Add this line
+    name = StringField('Agent Name', validators=[DataRequired()])
+    model = StringField('Model', validators=[DataRequired()])
+    is_openai = BooleanField('Is OpenAI Agent')
     create_agent = SubmitField('Create Agent')
-    remove_agent = SubmitField('Remove Agent')
 
 class EditGitUrlForm(FlaskForm):
-    git_url = StringField('Git URL', validators=[DataRequired(), Length(max=256)])
-    submit = SubmitField('Save')
+    git_url = StringField('Git URL', validators=[DataRequired()])
+    submit = SubmitField('Update Git URL')
+
+class CloneIngestForm(FlaskForm):
+    project_url = StringField('Project URL', validators=[DataRequired()])
+    submit = SubmitField('Clone and Ingest')

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -162,7 +161,6 @@
         }
     </style>
 </head>
-
 <body>
     <header>
         <h1>{{ project.name }}</h1>
@@ -201,12 +199,19 @@
             <p>Git URL: {{ project.git_url }}</p>
             <form method="POST" action="{{ url_for('clone_project_repo', project_id=project.id) }}">
                 {{ edit_git_url_form.hidden_tag() }}
+                <div>
+                    <label for="project_url">Project URL:</label>
+                    <input type="text" id="project_url" name="project_url" value="{{ project.git_url }}">
+                </div>
                 <button type="submit">Clone Repository</button>
             </form>
             <form method="POST" action="{{ url_for('ingest_repo', project_id=project.id) }}">
                 {{ edit_git_url_form.hidden_tag() }}
                 <button type="submit">Ingest Repository</button>
             </form>
+            <div id="status-indicator" class="{{ status_class }}">
+                {{ status_message }}
+            </div>
         </div>
     </div>
     <script>
@@ -315,5 +320,4 @@
         }
     </script>
 </body>
-
 </html>

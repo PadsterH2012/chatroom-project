@@ -3,7 +3,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, s
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Project, Agent, Config, Conversation, Message
-from forms import LoginForm, RegistrationForm, ProjectForm, DeleteProjectForm, SettingsForm, AgentForm, EditGitUrlForm
+from forms import LoginForm, RegistrationForm, ProjectForm, DeleteProjectForm, SettingsForm, AgentForm, EditGitUrlForm, CloneIngestForm
 from datetime import datetime
 from flask_wtf.csrf import CSRFProtect
 import logging
@@ -12,6 +12,7 @@ import io
 from io import BytesIO
 import os
 import git
+import subprocess
 
 csrf = CSRFProtect()
 
@@ -65,6 +66,7 @@ def init_routes(app):
     def chat():
         project_form = ProjectForm()
         delete_project_form = DeleteProjectForm()
+        clone_ingest_form = CloneIngestForm()
 
         if project_form.validate_on_submit() and 'create_project' in request.form:
             new_project = Project(name=project_form.name.data, git_url=project_form.git_url.data)
@@ -85,7 +87,9 @@ def init_routes(app):
             return redirect(url_for('chat'))
 
         projects = Project.query.all()
-        return render_template('chat.html', project_form=project_form, delete_project_form=delete_project_form, projects=projects)
+        status_class = request.args.get('status_class', 'green')
+        status_message = request.args.get('status_message', 'Ingestion successful and recent')
+        return render_template('chat.html', project_form=project_form, delete_project_form=delete_project_form, clone_ingest_form=clone_ingest_form, projects=projects, status_class=status_class, status_message=status_message)
 
     @app.route('/project/<int:project_id>', methods=['GET', 'POST'], endpoint='project_page')
     @login_required
@@ -110,7 +114,10 @@ def init_routes(app):
                         with open(os.path.join(root, file), 'r') as f:
                             code_files.append({'filename': file, 'content': f.read()})
 
-        return render_template('conversation.html', project=project, agents=agents, messages=messages, code_files=code_files, edit_git_url_form=edit_git_url_form)
+        clone_ingest_form = CloneIngestForm()
+        status_class = request.args.get('status_class', 'green')
+        status_message = request.args.get('status_message', 'Ingestion successful and recent')
+        return render_template('conversation.html', project=project, agents=agents, messages=messages, code_files=code_files, edit_git_url_form=edit_git_url_form, clone_ingest_form=clone_ingest_form, status_class=status_class, status_message=status_message)
 
     @app.route('/clone_repo/<int:project_id>', methods=['POST'])
     @login_required
@@ -132,6 +139,89 @@ def init_routes(app):
         except Exception as e:
             flash(f'Failed to clone repository: {str(e)}', 'error')
         return redirect(url_for('project_page', project_id=project.id))
+
+    @app.route('/clone_and_ingest', methods=['POST'])
+    @login_required
+    def clone_and_ingest():
+        form = CloneIngestForm()
+        if form.validate_on_submit():
+            project_url = form.project_url.data
+            # Clone the repository
+            clone_result = clone_repository(project_url)
+            if clone_result:
+                # Ingest the repository
+                ingest_result = ingest_repository()
+                if ingest_result:
+                    flash('Repository cloned and ingested successfully', 'success')
+                    status_class = 'green'
+                    status_message = 'Ingestion successful and recent'
+                else:
+                    flash('Repository ingestion failed', 'error')
+                    status_class = 'red'
+                    status_message = 'Ingestion failed or outdated'
+            else:
+                flash('Repository cloning failed', 'error')
+                status_class = 'red'
+                status_message = 'Cloning failed or outdated'
+        else:
+            flash('Invalid project URL', 'error')
+            status_class = 'red'
+            status_message = 'Invalid project URL'
+        return redirect(url_for('chat', status_class=status_class, status_message=status_message))
+
+    @app.route('/ingest_repo/<int:project_id>', methods=['POST'])
+    @login_required
+    def ingest_repo(project_id):
+        project = Project.query.get_or_404(project_id)
+        project_dir = f"./repos/{project.id}"
+
+        if not os.path.exists(project_dir):
+            flash('Repository has not been cloned for this project.', 'error')
+            return redirect(url_for('project_page', project_id=project.id))
+
+        code_contents = []
+        for root, dirs, files in os.walk(project_dir):
+            for file in files:
+                if file.endswith('.py') or file.endswith('.txt') or file.endswith('.md'):
+                    with open(os.path.join(root, file), 'r') as f:
+                        code_contents.append(f.read())
+
+        payload = {
+            'project_id': project.id,
+            'code_contents': code_contents
+        }
+
+        try:
+            # Simulate sending the code to the agent for ingestion
+            # Replace this with the actual endpoint and payload format as required by your agent
+            response = requests.post('http://your-agent-endpoint/ingest', json=payload)
+            response.raise_for_status()
+            flash('Repository ingested successfully!', 'success')
+        except requests.RequestException as e:
+            flash(f'Failed to ingest repository: {str(e)}', 'error')
+
+        return redirect(url_for('project_page', project_id=project.id))
+
+    def clone_repository(project_url):
+        try:
+            # Assuming you have a directory where repositories are stored
+            repo_dir = "/path/to/repos"
+            repo_name = project_url.split('/')[-1].replace('.git', '')
+            repo_path = os.path.join(repo_dir, repo_name)
+            
+            # Remove existing directory if it exists for a fresh clone
+            if os.path.exists(repo_path):
+                subprocess.run(['rm', '-rf', repo_path], check=True)
+            
+            subprocess.run(['git', 'clone', project_url, repo_path], check=True)
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+    def ingest_repository():
+        # Implement your ingestion logic here
+        # For example, parsing files, loading them into a database, etc.
+        return True
 
     @app.route('/send_message', methods=['POST'], endpoint='send_message')
     @login_required
@@ -278,39 +368,6 @@ def init_routes(app):
             except requests.RequestException as e:
                 logging.error(f'Failed to communicate with agent: {str(e)}')
                 return jsonify({'error': f'Failed to communicate with agent: {str(e)}'}), 500
-
-    @app.route('/ingest_repo/<int:project_id>', methods=['POST'])
-    @login_required
-    def ingest_repo(project_id):
-        project = Project.query.get_or_404(project_id)
-        project_dir = f"./repos/{project.id}"
-
-        if not os.path.exists(project_dir):
-            flash('Repository has not been cloned for this project.', 'error')
-            return redirect(url_for('project_page', project_id=project.id))
-
-        code_contents = []
-        for root, dirs, files in os.walk(project_dir):
-            for file in files:
-                if file.endswith('.py') or file.endswith('.txt') or file.endswith('.md'):
-                    with open(os.path.join(root, file), 'r') as f:
-                        code_contents.append(f.read())
-
-        payload = {
-            'project_id': project.id,
-            'code_contents': code_contents
-        }
-
-        try:
-            # Simulate sending the code to the agent for ingestion
-            # Replace this with the actual endpoint and payload format as required by your agent
-            response = requests.post('http://your-agent-endpoint/ingest', json=payload)
-            response.raise_for_status()
-            flash('Repository ingested successfully!', 'success')
-        except requests.RequestException as e:
-            flash(f'Failed to ingest repository: {str(e)}', 'error')
-
-        return redirect(url_for('project_page', project_id=project.id))
 
     @app.route('/settings', methods=['GET', 'POST'], endpoint='settings')
     @login_required
