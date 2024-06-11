@@ -1,5 +1,5 @@
 import requests
-from flask import render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import render_template, request, redirect, url_for, flash, jsonify, send_file, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Project, Agent, Config, Conversation, Message
@@ -13,6 +13,7 @@ from io import BytesIO
 import os
 import git
 import subprocess
+from sqlalchemy.orm.exc import NoResultFound
 
 csrf = CSRFProtect()
 
@@ -77,7 +78,7 @@ def init_routes(app):
 
         if delete_project_form.validate_on_submit() and request.form.get('form_type') == 'delete_project':
             project_id = delete_project_form.id.data
-            project = db.session.get(Project, project_id)
+            project = get_project(project_id)
             if project:
                 db.session.delete(project)
                 db.session.commit()
@@ -94,7 +95,9 @@ def init_routes(app):
     @app.route('/project/<int:project_id>', methods=['GET', 'POST'], endpoint='project_page')
     @login_required
     def project_page(project_id):
-        project = Project.query.get_or_404(project_id)
+        project = get_project(project_id)
+        if not project:
+            abort(404)
         agents = Agent.query.all()
         messages = Message.query.filter_by(conversation_id=project_id).all()
 
@@ -119,38 +122,23 @@ def init_routes(app):
         status_message = request.args.get('status_message', 'Ingestion successful and recent')
         return render_template('conversation.html', project=project, agents=agents, messages=messages, code_files=code_files, edit_git_url_form=edit_git_url_form, clone_ingest_form=clone_ingest_form, status_class=status_class, status_message=status_message)
 
-    @app.route('/clone_repo/<int:project_id>', methods=['POST'])
+    @app.route('/clone_and_ingest/<int:project_id>', methods=['POST'])
     @login_required
-    def clone_project_repo(project_id):
-        project = Project.query.get_or_404(project_id)
-        repo_url = project.git_url
-        project_dir = f"./repos/{project.id}"
-
-        if not repo_url:
-            flash('Git URL is not set for this project.', 'error')
-            return redirect(url_for('project_page', project_id=project.id))
-
-        try:
-            if os.path.exists(project_dir):
-                git.Repo(project_dir).remote().pull()
-            else:
-                git.Repo.clone_from(repo_url, project_dir)
-            flash('Repository cloned successfully!', 'success')
-        except Exception as e:
-            flash(f'Failed to clone repository: {str(e)}', 'error')
-        return redirect(url_for('project_page', project_id=project.id))
-
-    @app.route('/clone_and_ingest', methods=['POST'])
-    @login_required
-    def clone_and_ingest():
+    def clone_and_ingest(project_id):
         form = CloneIngestForm()
         if form.validate_on_submit():
             project_url = form.project_url.data
-            # Clone the repository
-            clone_result = clone_repository(project_url)
+            project = get_project(project_id)
+            if not project:
+                abort(404)
+            project.git_url = project_url
+            db.session.commit()
+
+            logging.info(f"Cloning repository from {project_url}")
+            clone_result = clone_repository(project_url, project_id)
             if clone_result:
-                # Ingest the repository
-                ingest_result = ingest_repository()
+                logging.info("Repository cloned successfully. Starting ingestion.")
+                ingest_result = ingest_repository(project_id)
                 if ingest_result:
                     flash('Repository cloned and ingested successfully', 'success')
                     status_class = 'green'
@@ -167,17 +155,26 @@ def init_routes(app):
             flash('Invalid project URL', 'error')
             status_class = 'red'
             status_message = 'Invalid project URL'
-        return redirect(url_for('chat', status_class=status_class, status_message=status_message))
+        return redirect(url_for('project_page', project_id=project_id, status_class=status_class, status_message=status_message))
 
-    @app.route('/ingest_repo/<int:project_id>', methods=['POST'])
-    @login_required
-    def ingest_repo(project_id):
-        project = Project.query.get_or_404(project_id)
-        project_dir = f"./repos/{project.id}"
+    def clone_repository(project_url, project_id):
+        try:
+            repo_dir = f"./repos/{project_id}"
+            if os.path.exists(repo_dir):
+                logging.info(f"Removing existing directory {repo_dir}")
+                subprocess.run(['rm', '-rf', repo_dir], check=True)
+            logging.info(f"Cloning repository to {repo_dir}")
+            subprocess.run(['git', 'clone', project_url, repo_dir], check=True)
+            return True
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Cloning failed: {str(e)}")
+            return False
 
+    def ingest_repository(project_id):
+        project_dir = f"./repos/{project_id}"
         if not os.path.exists(project_dir):
-            flash('Repository has not been cloned for this project.', 'error')
-            return redirect(url_for('project_page', project_id=project.id))
+            logging.error(f"Repository directory {project_dir} does not exist")
+            return False
 
         code_contents = []
         for root, dirs, files in os.walk(project_dir):
@@ -187,41 +184,47 @@ def init_routes(app):
                         code_contents.append(f.read())
 
         payload = {
-            'project_id': project.id,
+            'project_id': project_id,
             'code_contents': code_contents
         }
 
         try:
-            # Simulate sending the code to the agent for ingestion
-            # Replace this with the actual endpoint and payload format as required by your agent
-            response = requests.post('http://your-agent-endpoint/ingest', json=payload)
+            # Update the URL to the actual ingestion API endpoint
+            agent_endpoint = 'http://127.0.0.1:5001/ingest'
+            logging.info(f"Sending ingestion request for project {project_id} to {agent_endpoint}")
+            response = requests.post(agent_endpoint, json=payload)
             response.raise_for_status()
-            flash('Repository ingested successfully!', 'success')
-        except requests.RequestException as e:
-            flash(f'Failed to ingest repository: {str(e)}', 'error')
-
-        return redirect(url_for('project_page', project_id=project.id))
-
-    def clone_repository(project_url):
-        try:
-            # Assuming you have a directory where repositories are stored
-            repo_dir = "/path/to/repos"
-            repo_name = project_url.split('/')[-1].replace('.git', '')
-            repo_path = os.path.join(repo_dir, repo_name)
-            
-            # Remove existing directory if it exists for a fresh clone
-            if os.path.exists(repo_path):
-                subprocess.run(['rm', '-rf', repo_path], check=True)
-            
-            subprocess.run(['git', 'clone', project_url, repo_path], check=True)
             return True
-        except subprocess.CalledProcessError:
+        except requests.RequestException as e:
+            logging.error(f"Ingestion failed: {str(e)}")
             return False
+        
+    @app.route('/query_agent', methods=['POST'])
+    @login_required
+    def query_agent():
+        data = request.json
+        project_id = data.get('project_id')
+        query_text = data.get('query')
 
-    def ingest_repository():
-        # Implement your ingestion logic here
-        # For example, parsing files, loading them into a database, etc.
-        return True
+        if not project_id or not query_text:
+            return jsonify({'error': 'Invalid request data'}), 400
+
+        payload = {
+            'project_id': project_id,
+            'query': query_text
+        }
+
+        try:
+            agent_endpoint = 'http://127.0.0.1:5001/query'  # Update with actual endpoint
+            logging.info(f"Sending query request for project {project_id} to {agent_endpoint}")
+            response = requests.post(agent_endpoint, json=payload)
+            response.raise_for_status()
+            agent_response = response.json().get('response')
+            return jsonify({'response': agent_response})
+        except requests.RequestException as e:
+            logging.error(f'Query failed: {str(e)}')
+            return jsonify({'error': f'Query failed: {str(e)}'}), 500
+
 
     @app.route('/send_message', methods=['POST'], endpoint='send_message')
     @login_required
@@ -508,3 +511,9 @@ def init_routes(app):
                 flash(f'Failed to import settings: {str(e)}', 'error')
 
         return redirect(url_for('settings'))
+
+def get_project(project_id):
+    try:
+        return db.session.query(Project).filter(Project.id == project_id).one()
+    except NoResultFound:
+        return None
