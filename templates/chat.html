@@ -99,6 +99,24 @@
             <div>
                 {{ project_form.name.label }}
                 {{ project_form.name }}
+                {% if project_form.name.errors %}
+                    <ul>
+                        {% for error in project_form.name.errors %}
+                            <li style="color: red;">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div>
+                {{ project_form.git_url.label }}
+                {{ project_form.git_url }}
+                {% if project_form.git_url.errors %}
+                    <ul>
+                        {% for error in project_form.git_url.errors %}
+                            <li style="color: red;">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
             <div>
                 <button type="submit">{{ project_form.submit.label }}</button>

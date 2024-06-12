@@ -91,7 +91,7 @@ def init_routes(app):
         status_class = request.args.get('status_class', 'green')
         status_message = request.args.get('status_message', 'Ingestion successful and recent')
         return render_template('chat.html', project_form=project_form, delete_project_form=delete_project_form, clone_ingest_form=clone_ingest_form, projects=projects, status_class=status_class, status_message=status_message)
-
+        
     @app.route('/project/<int:project_id>', methods=['GET', 'POST'], endpoint='project_page')
     @login_required
     def project_page(project_id):
@@ -237,13 +237,15 @@ def init_routes(app):
                 'Authorization': f'Bearer {config.openai_api_key}',
                 'Content-Type': 'application/json'
             }
+            # Construct the messages for the chat completion
+            messages = [{'role': 'system', 'content': 'You are a helpful assistant.'}]
+            for code_snippet in code_context:
+                messages.append({'role': 'system', 'content': code_snippet})
+            messages.append({'role': 'user', 'content': message_text})
+            
             payload = {
                 'model': agent.model,
-                'messages': [
-                    {'role': 'system', 'content': 'You are a helpful assistant.'},
-                    {'role': 'user', 'content': message_text}
-                ],
-                'context': code_context,
+                'messages': messages,
                 'max_tokens': 150,
                 'temperature': 0.7,
                 'top_p': 1.0,
@@ -304,25 +306,31 @@ def init_routes(app):
                 logging.info(f"Response content: {response.content}")
                 response.raise_for_status()
 
-                ollama_response = response.json()
-                agent_reply = ollama_response['response']
+                # Handle the streaming response
+                agent_reply = ""
+                for line in response.iter_lines():
+                    if line:
+                        json_line = json.loads(line)
+                        agent_reply += json_line['response']
 
                 # Save agent's reply to the database
                 agent_message = Message(
                     conversation_id=conversation.id,
                     user_id=None,
                     agent_id=agent.id,
-                    text=agent_reply,
+                    text=agent_reply.strip(),
                     timestamp=datetime.utcnow()
                 )
                 db.session.add(agent_message)
                 db.session.commit()
 
-                return jsonify({'reply': agent_reply})
+                return jsonify({'reply': agent_reply.strip()})
 
             except requests.RequestException as e:
                 logging.error(f'Failed to communicate with agent: {str(e)}')
                 return jsonify({'error': f'Failed to communicate with agent: {str(e)}'}), 500
+
+
 
     @app.route('/settings', methods=['GET', 'POST'], endpoint='settings')
     @login_required
