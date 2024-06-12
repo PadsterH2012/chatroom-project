@@ -183,47 +183,12 @@ def init_routes(app):
                     with open(os.path.join(root, file), 'r') as f:
                         code_contents.append(f.read())
 
-        payload = {
-            'project_id': project_id,
-            'code_contents': code_contents
-        }
+        # Save ingested code to the database
+        project = get_project(project_id)
+        project.ingested_code = json.dumps(code_contents)  # Ensure this line is correct
+        db.session.commit()
 
-        try:
-            # Update the URL to the actual ingestion API endpoint
-            agent_endpoint = 'http://127.0.0.1:5001/ingest'
-            logging.info(f"Sending ingestion request for project {project_id} to {agent_endpoint}")
-            response = requests.post(agent_endpoint, json=payload)
-            response.raise_for_status()
-            return True
-        except requests.RequestException as e:
-            logging.error(f"Ingestion failed: {str(e)}")
-            return False
-        
-    @app.route('/query_agent', methods=['POST'])
-    @login_required
-    def query_agent():
-        data = request.json
-        project_id = data.get('project_id')
-        query_text = data.get('query')
-
-        if not project_id or not query_text:
-            return jsonify({'error': 'Invalid request data'}), 400
-
-        payload = {
-            'project_id': project_id,
-            'query': query_text
-        }
-
-        try:
-            agent_endpoint = 'http://127.0.0.1:5001/query'  # Update with actual endpoint
-            logging.info(f"Sending query request for project {project_id} to {agent_endpoint}")
-            response = requests.post(agent_endpoint, json=payload)
-            response.raise_for_status()
-            agent_response = response.json().get('response')
-            return jsonify({'response': agent_response})
-        except requests.RequestException as e:
-            logging.error(f'Query failed: {str(e)}')
-            return jsonify({'error': f'Query failed: {str(e)}'}), 500
+        return True
 
 
     @app.route('/send_message', methods=['POST'], endpoint='send_message')
@@ -261,7 +226,11 @@ def init_routes(app):
             logging.error('Configuration not found')
             return jsonify({'error': 'Configuration not found'}), 404
 
-        # Send the message to the appropriate API
+        # Include the ingested code context if available
+        project = get_project(project_id)
+        code_context = json.loads(project.ingested_code) if project.ingested_code else []
+
+        # Prepare payload for the agent
         if agent.is_openai:
             openai_url = 'https://api.openai.com/v1/chat/completions'
             headers = {
@@ -274,6 +243,7 @@ def init_routes(app):
                     {'role': 'system', 'content': 'You are a helpful assistant.'},
                     {'role': 'user', 'content': message_text}
                 ],
+                'context': code_context,
                 'max_tokens': 150,
                 'temperature': 0.7,
                 'top_p': 1.0,
@@ -322,21 +292,9 @@ def init_routes(app):
             }
             payload = {
                 'model': model_name,
-                'prompt': message_text
+                'prompt': message_text,
+                'context': code_context
             }
-
-            # Include code files in the payload
-            project = Project.query.get(project_id)
-            project_dir = f"./repos/{project.id}"
-            code_files = []
-            if os.path.exists(project_dir):
-                for root, dirs, files in os.walk(project_dir):
-                    for file in files:
-                        if file.endswith('.py') or file.endswith('.txt') or file.endswith('.md'):
-                            with open(os.path.join(root, file), 'r') as f:
-                                code_files.append({'filename': file, 'content': f.read()})
-
-            payload['code_files'] = code_files
 
             try:
                 logging.info(f"Sending request to Ollama API: {ollama_url}")
@@ -346,14 +304,8 @@ def init_routes(app):
                 logging.info(f"Response content: {response.content}")
                 response.raise_for_status()
 
-                # Parse the streaming JSON response
-                ollama_responses = []
-                for line in response.iter_lines():
-                    if line:
-                        ollama_response = json.loads(line.decode('utf-8'))
-                        ollama_responses.append(ollama_response['response'])
-
-                agent_reply = " ".join(ollama_responses)
+                ollama_response = response.json()
+                agent_reply = ollama_response['response']
 
                 # Save agent's reply to the database
                 agent_message = Message(
@@ -511,6 +463,128 @@ def init_routes(app):
                 flash(f'Failed to import settings: {str(e)}', 'error')
 
         return redirect(url_for('settings'))
+
+    @app.route('/query_agent', methods=['POST'])
+    @login_required
+    def query_agent():
+        data = request.json
+        project_id = data.get('project_id')
+        agent_id = data.get('agent_id')
+        question = data.get('question')
+
+        if not project_id or not agent_id or not question:
+            logging.error('Invalid request data')
+            return jsonify({'error': 'Invalid request data'}), 400
+
+        # Retrieve the ingested code context for the project
+        project = get_project(project_id)
+        code_context = json.loads(project.ingested_code) if project.ingested_code else []
+
+        # Get the agent and its associated URL from the database
+        agent = Agent.query.get(agent_id)
+        config = Config.query.first()
+
+        if not agent:
+            logging.error('Agent not found')
+            return jsonify({'error': 'Agent not found'}), 404
+
+        if not config:
+            logging.error('Configuration not found')
+            return jsonify({'error': 'Configuration not found'}), 404
+
+        # Prepare payload for the agent
+        if agent.is_openai:
+            openai_url = 'https://api.openai.com/v1/chat/completions'
+            headers = {
+                'Authorization': f'Bearer {config.openai_api_key}',
+                'Content-Type': 'application/json'
+            }
+            payload = {
+                'model': agent.model,
+                'messages': [
+                    {'role': 'system', 'content': 'You are a helpful assistant.'},
+                    {'role': 'user', 'content': question}
+                ],
+                'context': code_context,
+                'max_tokens': 150,
+                'temperature': 0.7,
+                'top_p': 1.0,
+                'n': 1,
+                'stream': False,
+                'logprobs': None,
+                'stop': None
+            }
+
+            try:
+                logging.info(f"Sending request to OpenAI API: {openai_url}")
+                logging.info(f"Payload: {payload}")
+                response = requests.post(openai_url, json=payload, headers=headers)
+                logging.info(f"Response status code: {response.status_code}")
+                logging.info(f"Response content: {response.content}")
+                response.raise_for_status()
+
+                openai_response = response.json()
+                agent_reply = openai_response['choices'][0]['message']['content'].strip()
+
+                # Save agent's reply to the database
+                agent_message = Message(
+                    conversation_id=conversation.id,
+                    user_id=None,
+                    agent_id=agent.id,
+                    text=agent_reply,
+                    timestamp=datetime.utcnow()
+                )
+                db.session.add(agent_message)
+                db.session.commit()
+
+                return jsonify({'reply': agent_reply})
+
+            except requests.RequestException as e:
+                logging.error(f'Failed to communicate with agent: {str(e)}')
+                return jsonify({'error': f'Failed to communicate with agent: {str(e)}'}), 500
+        else:
+            # Send the message to the Ollama API
+            ollama_url = config.ollama_url
+            ollama_key = config.ollama_key
+            model_name = agent.model
+
+            headers = {
+                'Authorization': f'Bearer {ollama_key}',
+                'Content-Type': 'application/json'
+            }
+            payload = {
+                'model': model_name,
+                'prompt': question,
+                'context': code_context
+            }
+
+            try:
+                logging.info(f"Sending request to Ollama API: {ollama_url}")
+                logging.info(f"Payload: {payload}")
+                response = requests.post(ollama_url, json=payload, headers=headers)
+                logging.info(f"Response status code: {response.status_code}")
+                logging.info(f"Response content: {response.content}")
+                response.raise_for_status()
+
+                ollama_response = response.json()
+                agent_reply = ollama_response['response']
+
+                # Save agent's reply to the database
+                agent_message = Message(
+                    conversation_id=conversation.id,
+                    user_id=None,
+                    agent_id=agent.id,
+                    text=agent_reply,
+                    timestamp=datetime.utcnow()
+                )
+                db.session.add(agent_message)
+                db.session.commit()
+
+                return jsonify({'reply': agent_reply})
+
+            except requests.RequestException as e:
+                logging.error(f'Failed to communicate with agent: {str(e)}')
+                return jsonify({'error': f'Failed to communicate with agent: {str(e)}'}), 500
 
 def get_project(project_id):
     try:

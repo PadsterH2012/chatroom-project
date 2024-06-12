@@ -210,6 +210,12 @@
             <div id="status-indicator" class="{{ status_class }}">
                 {{ status_message }}
             </div>
+            <div class="query-section">
+                <h3>Ask the Agent</h3>
+                <input type="text" id="query" placeholder="Ask something about the code">
+                <button type="button" onclick="sendQuery()">Ask</button>
+                <div id="query-response"></div>
+            </div>
         </div>
     </div>
     <script>
@@ -314,6 +320,39 @@
                     .catch(error => console.error('Error:', error));
             } else {
                 alert('Please select an agent and type a message.');
+            }
+        }
+
+        function sendQuery() {
+            const query = document.getElementById('query').value;
+            const projectId = {{ project.id }};
+
+            if (query.trim() !== '') {
+                const payload = {
+                    project_id: projectId,
+                    query: query
+                };
+
+                fetch('{{ url_for('query_agent') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error('Error:', data.error);
+                            document.getElementById('query-response').innerText = data.error;
+                        } else {
+                            document.getElementById('query-response').innerText = data.response;
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                alert('Please type a query.');
             }
         }
     </script>

@@ -18,8 +18,9 @@ class Project(db.Model):
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
     git_url = db.Column(db.String(256), nullable=True)
+    ingested_code = db.Column(db.Text, nullable=True)  # Add this line
 
-    def __init__(self, name, description=None, objectives=None, goals=None, start_date=None, end_date=None, git_url=None):
+    def __init__(self, name, description=None, objectives=None, goals=None, start_date=None, end_date=None, git_url=None, ingested_code=None):
         self.name = name
         self.description = description
         self.objectives = objectives
@@ -27,6 +28,7 @@ class Project(db.Model):
         self.start_date = start_date
         self.end_date = end_date
         self.git_url = git_url
+        self.ingested_code = ingested_code
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
