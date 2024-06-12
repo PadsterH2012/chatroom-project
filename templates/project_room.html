@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatroom</title>
+    <title>Project Room</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
@@ -63,7 +63,7 @@
                 </li>
             {% endfor %}
         </ul>
-        <form method="POST" action="{{ url_for('chat') }}" id="delete-project-form" style="display:none;">
+        <form method="POST" action="{{ url_for('project_room') }}" id="delete-project-form" style="display:none;">
             {{ delete_project_form.hidden_tag() }}
             <input type="hidden" id="delete-project-id" name="id">
             <input type="hidden" name="form_type" value="delete_project">
@@ -79,7 +79,7 @@
         </div>
     </div>
     <div class="main-content">
-        <h1>Chatroom</h1>
+        <h1>Project Room</h1>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <script>
@@ -93,7 +93,7 @@
         {% endwith %}
 
         <h2>Create a New Project</h2>
-        <form method="POST" action="{{ url_for('chat') }}">
+        <form method="POST" action="{{ url_for('project_room') }}">
             {{ project_form.hidden_tag() }}
             <input type="hidden" name="create_project" value="true">
             <div>

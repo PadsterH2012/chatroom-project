@@ -29,7 +29,7 @@ def init_routes(app):
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if current_user.is_authenticated:
-            return redirect(url_for('chat'))
+            return redirect(url_for('project_room'))
         form = LoginForm()
         if form.validate_on_submit():
             username = form.username.data
@@ -37,7 +37,7 @@ def init_routes(app):
             user = User.query.filter_by(username=username).first()
             if user and check_password_hash(user.password, password):
                 login_user(user)
-                return redirect(url_for('chat'))
+                return redirect(url_for('project_room'))
             else:
                 flash('Invalid username or password', 'error')
         return render_template('login.html', title='Login', form=form)
@@ -62,9 +62,9 @@ def init_routes(app):
         logout_user()
         return redirect(url_for('login'))
 
-    @app.route('/chat', methods=['GET', 'POST'])
+    @app.route('/project_room', methods=['GET', 'POST'])
     @login_required
-    def chat():
+    def project_room():
         project_form = ProjectForm()
         delete_project_form = DeleteProjectForm()
         clone_ingest_form = CloneIngestForm()
@@ -74,7 +74,7 @@ def init_routes(app):
             db.session.add(new_project)
             db.session.commit()
             flash('Project created successfully!', 'success')
-            return redirect(url_for('chat'))
+            return redirect(url_for('project_room'))
 
         if delete_project_form.validate_on_submit() and request.form.get('form_type') == 'delete_project':
             project_id = delete_project_form.id.data
@@ -85,12 +85,13 @@ def init_routes(app):
                 flash('Project deleted successfully!', 'success')
             else:
                 flash('Project not found!', 'error')
-            return redirect(url_for('chat'))
+            return redirect(url_for('project_room'))
 
         projects = Project.query.all()
         status_class = request.args.get('status_class', 'green')
         status_message = request.args.get('status_message', 'Ingestion successful and recent')
-        return render_template('chat.html', project_form=project_form, delete_project_form=delete_project_form, clone_ingest_form=clone_ingest_form, projects=projects, status_class=status_class, status_message=status_message)
+        return render_template('project_room.html', project_form=project_form, delete_project_form=delete_project_form, clone_ingest_form=clone_ingest_form, projects=projects, status_class=status_class, status_message=status_message)
+
         
     @app.route('/project/<int:project_id>', methods=['GET', 'POST'], endpoint='project_page')
     @login_required
