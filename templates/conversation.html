@@ -5,16 +5,7 @@
 {% block content %}
 <div class="container">
     <div class="conversation">
-        <div class="agent-selection">
-            <label for="agent">Send message to:</label>
-            <select id="agent" name="agent">
-                <option value="">Select an agent</option>
-                {% for agent in agents %}
-                <option value="{{ agent.id }}">{{ agent.name }} ({{ agent.model }})</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="chatbox" id="conversation-window">
+        <div class="conversation-window" id="conversation-window">
             {% for message in messages %}
             <div class="message {{ 'agent-message' if message.agent_id else 'user-message' }}">
                 {% if message.agent %}
@@ -25,6 +16,15 @@
             </div>
             {% endfor %}
         </div>
+        <div class="agent-selection">
+            <label for="agent">Send message to:</label>
+            <select id="agent" name="agent">
+                <option value="">Select an agent</option>
+                {% for agent in agents %}
+                <option value="{{ agent.id }}">{{ agent.name }} ({{ agent.model }})</option>
+                {% endfor %}
+            </select>
+        </div>
         <div class="message-input">
             <input type="text" id="message" placeholder="Type your message here" onkeydown="if(event.key === 'Enter') sendMessage()">
             <button type="button" onclick="sendMessage()">Send</button>
@@ -32,27 +32,28 @@
     </div>
     <div class="project-details">
         <h2>Project Details</h2>
-        <p>Name: {{ project.name }}</p>
-        <p>Git URL: {{ project.git_url }}</p>
-        <form method="POST" action="{{ url_for('clone_and_ingest', project_id=project.id) }}">
-            {{ edit_git_url_form.hidden_tag() }}
-            <div>
-                <label for="project_url">Project URL:</label>
-                <input type="text" id="project_url" name="project_url" value="{{ project.git_url }}">
-            </div>
-            <button type="submit">Clone and Ingest Repository</button>
-        </form>
-        <div id="status-indicator" class="{{ status_class }}">
-            {{ status_message }}
+        <div class="ingest-section">
+            <button type="button" onclick="ingestProject()">Ingest</button>
+            <div class="status-indicator {{ 'green' if status_class == 'success' else 'red' }}"></div>
         </div>
-        <div class="query-section">
-            <h3>Ask the Agent</h3>
-            <input type="text" id="query" placeholder="Ask something about the code">
-            <button type="button" onclick="sendQuery()">Ask</button>
-            <div id="query-response"></div>
+        <div class="section">
+            <p><strong>Project Name:</strong> {{ project.name }}</p>
+        </div>
+        <div class="section">
+            <p><strong>Git URL:</strong> <a href="{{ project.git_url }}" target="_blank">{{ project.git_url }}</a></p>
+        </div>
+        <div class="section">
+            <p><strong>Goals:</strong> Example waffle placeholder</p>
+        </div>
+        <div class="section">
+            <p><strong>Objective:</strong> Example waffle placeholder</p>
+        </div>
+        <div class="section">
+            <p><strong>Features:</strong> Example waffle placeholder</p>
         </div>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', (event) => {
         const lastSelectedAgent = localStorage.getItem('lastSelectedAgent');
@@ -189,6 +190,32 @@
         } else {
             alert('Please type a query.');
         }
+    }
+
+    function ingestProject() {
+        const projectId = {{ project.id }};
+        const payload = { project_id: projectId };
+
+        fetch('{{ url_for('clone_and_ingest', project_id=project.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error:', data.error);
+                } else {
+                    alert('Ingestion successful!');
+                    // Update status indicator color if needed
+                    document.querySelector('.status-indicator').classList.remove('red');
+                    document.querySelector('.status-indicator').classList.add('green');
+                }
+            })
+            .catch(error => console.error('Error:', error));
     }
 </script>
 {% endblock %}

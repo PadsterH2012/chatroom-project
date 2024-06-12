@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 </head>
 <body>
     <div class="container">
@@ -24,7 +24,7 @@
                 {{ form.confirm }}
             </div>
             <div>
-                {{ form.submit }}
+                <button type="submit">{{ form.submit.label }}</button>
             </div>
         </form>
         <a href="{{ url_for('login') }}">Already have an account? Log in here.</a>
