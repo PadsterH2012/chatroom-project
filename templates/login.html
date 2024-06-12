@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 </head>
 <body>
     <div class="container">
@@ -20,7 +21,7 @@
                 {{ form.password }}
             </div>
             <div>
-                {{ form.submit }}
+                <button type="submit">{{ form.submit.label }}</button>
             </div>
         </form>
         <a href="{{ url_for('register') }}">Register</a>

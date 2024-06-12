@@ -380,20 +380,21 @@ def init_routes(app):
 
         if request.method == 'POST' and 'remove_agent' in request.form:
             agent_id = request.form.get('agent_id')
-            print(f"Attempting to remove agent with ID: {agent_id}")
+            logging.info(f"Attempting to remove agent with ID: {agent_id}")
             agent = Agent.query.get(agent_id)
             if agent:
-                print(f"Found agent: {agent.name}")
+                logging.info(f"Found agent: {agent.name}")
                 db.session.delete(agent)
                 db.session.commit()
                 flash('Agent removed successfully!', 'success')
             else:
-                print("Agent not found")
+                logging.error("Agent not found")
                 flash('Agent not found!', 'error')
             return redirect(url_for('settings'))
 
         agents = Agent.query.all()
-        return render_template('settings.html', settings_form=settings_form, agent_form=agent_form, agents=agents)
+        projects = Project.query.all()
+        return render_template('settings.html', settings_form=settings_form, agent_form=agent_form, agents=agents, projects=projects)
 
     @app.route('/export_settings', methods=['GET'])
     @login_required

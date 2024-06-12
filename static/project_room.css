@@ -1,0 +1,91 @@
+/* project_room.css */
+.main-content {
+    max-width: 800px; /* Limit the width */
+    margin: 0 auto; /* Center the content */
+    padding: 20px;
+    background-color: #f9f9f9; /* Light background for better contrast */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.main-content h1, .main-content h2 {
+    margin-bottom: 20px;
+    text-align: center; /* Center align headings */
+}
+
+.main-content ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.main-content ul li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #fff; /* White background for list items */
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd; /* Light border */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+.main-content ul li a {
+    text-decoration: none;
+    color: #333;
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.main-content ul li button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.main-content ul li button:hover {
+    background-color: #c0392b;
+}
+
+.main-content form {
+    margin-top: 20px;
+    background-color: #fff; /* White background for the form */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+.main-content form div {
+    margin-bottom: 10px;
+}
+
+.main-content form div label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.main-content form div input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #ddd; /* Light border */
+}
+
+.main-content form button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.main-content form button:hover {
+    background-color: #2980b9;
+}
