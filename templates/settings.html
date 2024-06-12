@@ -1,175 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            toastr.options = {
-                "closeButton": true,
-                "debug": false,
-                "newestOnTop": false,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "preventDuplicates": false,
-                "onclick": null,
-                "showDuration": "300",
-                "hideDuration": "1000",
-                "timeOut": "5000",
-                "extendedTimeOut": "1000",
-                "showEasing": "swing",
-                "hideEasing": "linear",
-                "showMethod": "fadeIn",
-                "hideMethod": "fadeOut"
-            };
+{% extends "base.html" %}
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        toastr["{{ category }}"]("{{ message }}");
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+{% block title %}Settings{% endblock %}
 
-            $("form").on("submit", function(event) {
-                if ($(this).find("button[name='remove_agent']").length > 0) {
-                    if (!confirm('Are you sure you want to remove this agent?')) {
-                        event.preventDefault();
-                    }
-                }
-            });
-        });
-    </script>
-    <style>
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input,
-        .form-group select,
-        .form-group button {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        .agent-list {
-            margin-top: 20px;
-        }
-        .agent-list ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .agent-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Settings</h1>
-        <form method="POST" action="{{ url_for('settings') }}">
-            {{ settings_form.hidden_tag() }}
-            <div class="form-group">
-                {{ settings_form.ollama_url.label }}
-                {{ settings_form.ollama_url }}
-            </div>
-            <div class="form-group">
-                {{ settings_form.ollama_key.label }}
-                {{ settings_form.ollama_key }}
-            </div>
-            <div class="form-group">
-                {{ settings_form.model_name.label }}
-                {{ settings_form.model_name }}
-            </div>
-            <div class="form-group">
-                {{ settings_form.chatgpt_url.label }}
-                {{ settings_form.chatgpt_url }}
-            </div>
-            <div class="form-group">
-                {{ settings_form.chatgpt_key.label }}
-                {{ settings_form.chatgpt_key }}
-            </div>
-            <div class="form-group">
-                {{ settings_form.chatgpt_model.label }}
-                {{ settings_form.chatgpt_model }}
-            </div>
-            <div class="form-group">
-                {{ settings_form.openai_api_key.label }}  <!-- Add this block -->
-                {{ settings_form.openai_api_key }}
-            </div>
-            <div class="form-group">
-                {{ settings_form.submit }}
-            </div>
-        </form>
-        
-        <h2>Manage Agents</h2>
-        <form method="POST" action="{{ url_for('settings') }}">
-            {{ agent_form.hidden_tag() }}
-            <div class="form-group">
-                {{ agent_form.name.label }}
-                {{ agent_form.name }}
-            </div>
-            <div class="form-group">
-                {{ agent_form.model.label }}
-                {{ agent_form.model }}
-            </div>
-            <div class="form-group">
-                {{ agent_form.is_openai.label }}  <!-- Add this block -->
-                {{ agent_form.is_openai }}
-            </div>
-            <div class="form-group">
-                {{ agent_form.create_agent }}
-            </div>
-        </form>
-
-        <div class="agent-list">
-            <h3>Existing Agents</h3>
-            <ul>
-                {% for agent in agents %}
-                    <li>
-                        <span>{{ agent.name }} ({{ agent.model }})</span>
-                        <form method="POST" action="{{ url_for('settings') }}" style="display:inline;">
-                            {{ agent_form.hidden_tag() }}
-                            <input type="hidden" name="agent_id" value="{{ agent.id }}">
-                            <button type="submit" name="remove_agent" value="remove_agent">Remove</button>
-                        </form>
-                    </li>
-                {% endfor %}
-            </ul>
+{% block content %}
+<div class="container">
+    <h1>Settings</h1>
+    <form method="POST" action="{{ url_for('settings') }}">
+        {{ settings_form.hidden_tag() }}
+        <div class="form-group">
+            {{ settings_form.ollama_url.label }}
+            {{ settings_form.ollama_url }}
         </div>
-
-        <div>
-            <h2>Export/Import Settings</h2>
-            <form method="GET" action="{{ url_for('export_settings') }}">
-                <button type="submit">Export Settings</button>
-            </form>
-            <form method="POST" action="{{ url_for('import_settings') }}" enctype="multipart/form-data">
-                {{ settings_form.csrf_token }}
-                <input type="file" name="settings_file">
-                <button type="submit">Import Settings</button>
-            </form>
+        <div class="form-group">
+            {{ settings_form.ollama_key.label }}
+            {{ settings_form.ollama_key }}
         </div>
-
-        <div>
-            <a href="{{ url_for('project_room') }}">Back to Projects</a>
+        <div class="form-group">
+            {{ settings_form.model_name.label }}
+            {{ settings_form.model_name }}
         </div>
+        <div class="form-group">
+            {{ settings_form.chatgpt_url.label }}
+            {{ settings_form.chatgpt_url }}
+        </div>
+        <div class="form-group">
+            {{ settings_form.chatgpt_key.label }}
+            {{ settings_form.chatgpt_key }}
+        </div>
+        <div class="form-group">
+            {{ settings_form.chatgpt_model.label }}
+            {{ settings_form.chatgpt_model }}
+        </div>
+        <div class="form-group">
+            {{ settings_form.openai_api_key.label }}
+            {{ settings_form.openai_api_key }}
+        </div>
+        <div class="form-group">
+            {{ settings_form.submit }}
+        </div>
+    </form>
+    
+    <h2>Manage Agents</h2>
+    <form method="POST" action="{{ url_for('settings') }}">
+        {{ agent_form.hidden_tag() }}
+        <div class="form-group">
+            {{ agent_form.name.label }}
+            {{ agent_form.name }}
+        </div>
+        <div class="form-group">
+            {{ agent_form.model.label }}
+            {{ agent_form.model }}
+        </div>
+        <div class="form-group">
+            {{ agent_form.is_openai.label }}
+            {{ agent_form.is_openai }}
+        </div>
+        <div class="form-group">
+            {{ agent_form.create_agent }}
+        </div>
+    </form>
+
+    <div class="agent-list">
+        <h3>Existing Agents</h3>
+        <ul>
+            {% for agent in agents %}
+                <li>
+                    <span>{{ agent.name }} ({{ agent.model }})</span>
+                    <form method="POST" action="{{ url_for('settings') }}" style="display:inline;">
+                        {{ agent_form.hidden_tag() }}
+                        <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                        <button type="submit" name="remove_agent" value="remove_agent">Remove</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
     </div>
-</body>
-</html>
+
+    <div>
+        <h2>Export/Import Settings</h2>
+        <form method="GET" action="{{ url_for('export_settings') }}">
+            <button type="submit">Export Settings</button>
+        </form>
+        <form method="POST" action="{{ url_for('import_settings') }}" enctype="multipart/form-data">
+            {{ settings_form.csrf_token }}
+            <input type="file" name="settings_file">
+            <button type="submit">Import Settings</button>
+        </form>
+    </div>
+
+    <div>
+        <a href="{{ url_for('project_room') }}">Back to Projects</a>
+    </div>
+</div>
+{% endblock %}

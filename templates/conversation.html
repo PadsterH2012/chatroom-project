@@ -1,361 +1,348 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ project.name }} - Conversation</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
+{% block title %}{{ project.name }} - Conversation{% endblock %}
 
-        .container {
-            display: flex;
-            flex-direction: row;
-            height: calc(100vh - 50px);
-            padding: 20px;
-        }
+{% block content %}
+<!-- <style>
+    body {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+    }
 
-        .conversation {
-            flex: 3;
-            display: flex;
-            flex-direction: column;
-            margin-right: 20px;
-        }
+    .container {
+        display: flex;
+        flex-direction: row;
+        height: calc(100vh - 50px);
+        padding: 30px;
+    }
 
-        .conversation-window {
-            flex-grow: 1;
-            border: 1px solid #ccc;
-            padding: 20px;
-            overflow-y: auto;
-            background-color: #f9f9f9;
-        }
+    .conversation {
+        flex: 3;
+        display: flex;
+        flex-direction: column;
+        margin-right: 20px;
+    }
 
-        .message-input {
-            display: flex;
-            margin-top: 10px;
-        }
+    .conversation-window {
+        flex-grow: 1;
+        border: 1px solid #ccc;
+        padding: 20px;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+    }
 
-        .message-input input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
+    .message-input {
+        display: flex;
+        margin-top: 10px;
+    }
 
-        .message-input button {
-            padding: 10px 20px;
-            margin-left: 10px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-        }
+    .message-input input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
 
-        .message-input button:hover {
-            background-color: #0056b3;
-        }
+    .message-input button {
+        padding: 10px 20px;
+        margin-left: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+    }
 
-        .project-details {
-            flex: 1;
-            border: 1px solid #ccc;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
+    .message-input button:hover {
+        background-color: #0056b3;
+    }
 
-        header {
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            background-color: #007bff;
-            color: white;
-        }
+    .project-details {
+        flex: 1;
+        border: 1px solid #ccc;
+        padding: 20px;
+        background-color: #f9f9f9;
+    }
 
-        header a {
-            color: white;
-            text-decoration: none;
-        }
+    header {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        background-color: #007bff;
+        color: white;
+    }
 
-        .code-block {
-            background-color: #282c34;
-            color: #abb2bf;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            position: relative;
-            font-family: 'Courier New', Courier, monospace;
-        }
+    header a {
+        color: white;
+        text-decoration: none;
+    }
 
-        .code-block::before {
-            content: attr(data-lang);
-            position: absolute;
-            top: -10px;
-            left: 10px;
-            background: #007bff;
-            color: white;
-            border-radius: 3px;
-            padding: 2px 8px;
-            font-size: 12px;
-        }
+    .code-block {
+        background-color: #282c34;
+        color: #abb2bf;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+        position: relative;
+        font-family: 'Courier New', Courier, monospace;
+    }
 
-        .code-block pre {
-            margin: 0;
-            white-space: pre-wrap;
-        }
+    .code-block::before {
+        content: attr(data-lang);
+        position: absolute;
+        top: -10px;
+        left: 10px;
+        background: #007bff;
+        color: white;
+        border-radius: 3px;
+        padding: 2px 8px;
+        font-size: 12px;
+    }
 
-        .copy-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-        }
+    .code-block pre {
+        margin: 0;
+        white-space: pre-wrap;
+    }
 
-        .copy-button:hover {
-            background: #0056b3;
-        }
+    .copy-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
 
-        .message {
-            margin-bottom: 10px;
-        }
+    .copy-button:hover {
+        background: #0056b3;
+    }
 
-        .user-message {
-            background-color: #d1ecf1;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
+    .message {
+        margin-bottom: 10px;
+    }
 
-        .agent-message {
-            background-color: #f8d7da;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
+    .user-message {
+        background-color: #d1ecf1;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
 
-        .agent-name {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
+    .agent-message {
+        background-color: #f8d7da;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
 
-        .timestamp {
-            display: block;
-            font-size: 10px;
-            color: #666;
-            margin-top: 5px;
-        }
-    </style>
-</head>
+    .agent-name {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
 
-<body>
-    <header>
-        <h1>{{ project.name }}</h1>
-        <a href="{{ url_for('project_room') }}">Back to Projects</a>
-    </header>
-    <div class="container">
-        <div class="conversation">
-            <div class="agent-selection">
-                <label for="agent">Send message to:</label>
-                <select id="agent" name="agent">
-                    <option value="">Select an agent</option>
-                    {% for agent in agents %}
-                    <option value="{{ agent.id }}">{{ agent.name }} ({{ agent.model }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="conversation-window" id="conversation-window">
-                {% for message in messages %}
-                <div class="message {{ 'agent-message' if message.agent_id else 'user-message' }}">
-                    {% if message.agent %}
-                    <div class="agent-name">{{ message.agent.name }}</div>
-                    {% endif %}
-                    <span>{{ message.text|safe }}</span>
-                    <span class="timestamp">{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
-                </div>
+    .timestamp {
+        display: block;
+        font-size: 10px;
+        color: #666;
+        margin-top: 5px;
+    }
+</style> -->
+
+<div class="container">
+    <div class="conversation">
+        <div class="agent-selection">
+            <label for="agent">Send message to:</label>
+            <select id="agent" name="agent">
+                <option value="">Select an agent</option>
+                {% for agent in agents %}
+                <option value="{{ agent.id }}">{{ agent.name }} ({{ agent.model }})</option>
                 {% endfor %}
-            </div>
-            <div class="message-input">
-                <input type="text" id="message" placeholder="Type your message here" onkeydown="if(event.key === 'Enter') sendMessage()">
-                <button type="button" onclick="sendMessage()">Send</button>
-            </div>
+            </select>
         </div>
-        <div class="project-details">
-            <h2>Project Details</h2>
-            <p>Name: {{ project.name }}</p>
-            <p>Git URL: {{ project.git_url }}</p>
-            <form method="POST" action="{{ url_for('clone_and_ingest', project_id=project.id) }}">
-                {{ edit_git_url_form.hidden_tag() }}
-                <div>
-                    <label for="project_url">Project URL:</label>
-                    <input type="text" id="project_url" name="project_url" value="{{ project.git_url }}">
-                </div>
-                <button type="submit">Clone and Ingest Repository</button>
-            </form>
-            <div id="status-indicator" class="{{ status_class }}">
-                {{ status_message }}
+        <div class="conversation-window" id="conversation-window">
+            {% for message in messages %}
+            <div class="message {{ 'agent-message' if message.agent_id else 'user-message' }}">
+                {% if message.agent %}
+                <div class="agent-name">{{ message.agent.name }}</div>
+                {% endif %}
+                <span>{{ message.text|safe }}</span>
+                <span class="timestamp">{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
             </div>
-            <div class="query-section">
-                <h3>Ask the Agent</h3>
-                <input type="text" id="query" placeholder="Ask something about the code">
-                <button type="button" onclick="sendQuery()">Ask</button>
-                <div id="query-response"></div>
-            </div>
+            {% endfor %}
+        </div>
+        <div class="message-input">
+            <input type="text" id="message" placeholder="Type your message here" onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button type="button" onclick="sendMessage()">Send</button>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const lastSelectedAgent = localStorage.getItem('lastSelectedAgent');
-            if (lastSelectedAgent) {
-                document.getElementById('agent').value = lastSelectedAgent;
-            }
+    <div class="project-details">
+        <h2>Project Details</h2>
+        <p>Name: {{ project.name }}</p>
+        <p>Git URL: {{ project.git_url }}</p>
+        <form method="POST" action="{{ url_for('clone_and_ingest', project_id=project.id) }}">
+            {{ edit_git_url_form.hidden_tag() }}
+            <div>
+                <label for="project_url">Project URL:</label>
+                <input type="text" id="project_url" name="project_url" value="{{ project.git_url }}">
+            </div>
+            <button type="submit">Clone and Ingest Repository</button>
+        </form>
+        <div id="status-indicator" class="{{ status_class }}">
+            {{ status_message }}
+        </div>
+        <div class="query-section">
+            <h3>Ask the Agent</h3>
+            <input type="text" id="query" placeholder="Ask something about the code">
+            <button type="button" onclick="sendQuery()">Ask</button>
+            <div id="query-response"></div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const lastSelectedAgent = localStorage.getItem('lastSelectedAgent');
+        if (lastSelectedAgent) {
+            document.getElementById('agent').value = lastSelectedAgent;
+        }
 
-            document.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightBlock(block);
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
 
-                // Add copy button
-                const copyButton = document.createElement('button');
-                copyButton.className = 'copy-button';
-                copyButton.textContent = 'Copy';
-                copyButton.addEventListener('click', () => {
-                    navigator.clipboard.writeText(block.innerText).then(() => {
-                        alert('Code copied to clipboard!');
-                    }).catch(err => {
-                        console.error('Failed to copy code: ', err);
-                    });
+            // Add copy button
+            const copyButton = document.createElement('button');
+            copyButton.className = 'copy-button';
+            copyButton.textContent = 'Copy';
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(block.innerText).then(() => {
+                    alert('Code copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy code: ', err);
                 });
-                block.parentElement.appendChild(copyButton);
             });
+            block.parentElement.appendChild(copyButton);
         });
+    });
 
-        document.getElementById('agent').addEventListener('change', (event) => {
-            const selectedAgent = event.target.value;
-            localStorage.setItem('lastSelectedAgent', selectedAgent);
+    document.getElementById('agent').addEventListener('change', (event) => {
+        const selectedAgent = event.target.value;
+        localStorage.setItem('lastSelectedAgent', selectedAgent);
+    });
+
+    function formatAIResponse(response) {
+        // Detect and format code blocks with language indication
+        const codeBlockPattern = /```(\w+)\n([\s\S]+?)```/g;
+        response = response.replace(codeBlockPattern, (match, lang, code) => {
+            return `<pre><code class="language-${lang}">${code}</code></pre>`;
         });
+        return response;
+    }
 
-        function formatAIResponse(response) {
-            // Detect and format code blocks with language indication
-            const codeBlockPattern = /```(\w+)\n([\s\S]+?)```/g;
-            response = response.replace(codeBlockPattern, (match, lang, code) => {
-                return `<pre><code class="language-${lang}">${code}</code></pre>`;
-            });
-            return response;
-        }
+    function sendMessage() {
+        const message = document.getElementById('message').value;
+        const agentId = document.getElementById('agent').value;
 
-        function sendMessage() {
-            const message = document.getElementById('message').value;
-            const agentId = document.getElementById('agent').value;
+        if (message.trim() !== '' && agentId) {
+            const payload = {
+                project_id: {{ project.id }},
+                agent_id: agentId,
+                message: message
+            };
 
-            if (message.trim() !== '' && agentId) {
-                const payload = {
-                    project_id: {{ project.id }},
-                    agent_id: agentId,
-                    message: message
-                };
+            fetch('{{ url_for('send_message') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                    } else {
+                        const conversationWindow = document.getElementById('conversation-window');
 
-                fetch('{{ url_for('send_message') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            console.error('Error:', data.error);
-                        } else {
-                            const conversationWindow = document.getElementById('conversation-window');
+                        // Append user message
+                        const userMessage = document.createElement('div');
+                        userMessage.classList.add('message', 'user-message');
+                        userMessage.innerHTML = `${message} <span class="timestamp">${new Date().toLocaleString()}</span>`;
+                        conversationWindow.appendChild(userMessage);
 
-                            // Append user message
-                            const userMessage = document.createElement('div');
-                            userMessage.classList.add('message', 'user-message');
-                            userMessage.innerHTML = `${message} <span class="timestamp">${new Date().toLocaleString()}</span>`;
-                            conversationWindow.appendChild(userMessage);
+                        // Append agent response
+                        const agentMessage = document.createElement('div');
+                        agentMessage.classList.add('message', 'agent-message');
+                        agentMessage.innerHTML = `<div class="agent-name">${data.agent_name}</div>${formatAIResponse(data.reply)}`;
+                        conversationWindow.appendChild(agentMessage);
 
-                            // Append agent response
-                            const agentMessage = document.createElement('div');
-                            agentMessage.classList.add('message', 'agent-message');
-                            agentMessage.innerHTML = `<div class="agent-name">${data.agent_name}</div>${formatAIResponse(data.reply)}`;
-                            conversationWindow.appendChild(agentMessage);
+                        conversationWindow.scrollTop = conversationWindow.scrollHeight;
+                        document.getElementById('message').value = '';
 
-                            conversationWindow.scrollTop = conversationWindow.scrollHeight;
-                            document.getElementById('message').value = '';
+                        // Re-run highlight.js on new code blocks
+                        document.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightBlock(block);
 
-                            // Re-run highlight.js on new code blocks
-                            document.querySelectorAll('pre code').forEach((block) => {
-                                hljs.highlightBlock(block);
-
-                                // Add copy button
-                                const copyButton = document.createElement('button');
-                                copyButton.className = 'copy-button';
-                                copyButton.textContent = 'Copy';
-                                copyButton.addEventListener('click', () => {
-                                    navigator.clipboard.writeText(block.innerText).then(() => {
-                                        alert('Code copied to clipboard!');
-                                    }).catch(err => {
-                                        console.error('Failed to copy code: ', err);
-                                    });
+                            // Add copy button
+                            const copyButton = document.createElement('button');
+                            copyButton.className = 'copy-button';
+                            copyButton.textContent = 'Copy';
+                            copyButton.addEventListener('click', () => {
+                                navigator.clipboard.writeText(block.innerText).then(() => {
+                                    alert('Code copied to clipboard!');
+                                }).catch(err => {
+                                    console.error('Failed to copy code: ', err);
                                 });
-                                block.parentElement.appendChild(copyButton);
                             });
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            } else {
-                alert('Please select an agent and type a message.');
-            }
+                            block.parentElement.appendChild(copyButton);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            alert('Please select an agent and type a message.');
         }
+    }
 
-        function sendQuery() {
-            const query = document.getElementById('query').value;
-            const projectId = {{ project.id }};
+    function sendQuery() {
+        const query = document.getElementById('query').value;
+        const projectId = {{ project.id }};
 
-            if (query.trim() !== '') {
-                const payload = {
-                    project_id: projectId,
-                    query: query
-                };
+        if (query.trim() !== '') {
+            const payload = {
+                project_id: projectId,
+                query: query
+            };
 
-                fetch('{{ url_for('query_agent') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            console.error('Error:', data.error);
-                            document.getElementById('query-response').innerText = data.error;
-                        } else {
-                            document.getElementById('query-response').innerText = data.response;
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            } else {
-                alert('Please type a query.');
-            }
+            fetch('{{ url_for('query_agent') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        document.getElementById('query-response').innerText = data.error;
+                    } else {
+                        document.getElementById('query-response').innerText = data.response;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            alert('Please type a query.');
         }
-    </script>
-</body>
-
-</html>
+    }
+</script>
+{% endblock %}

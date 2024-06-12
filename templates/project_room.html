@@ -1,127 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Room</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script>
-        toastr.options = {
-            "closeButton": true,
-            "debug": false,
-            "newestOnTop": false,
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "preventDuplicates": false,
-            "onclick": null,
-            "showDuration": "300",
-            "hideDuration": "1000",
-            "timeOut": "5000",
-            "extendedTimeOut": "1000",
-            "showEasing": "swing",
-            "hideEasing": "linear",
-            "showMethod": "fadeIn",
-            "hideMethod": "fadeOut"
-        }
-    </script>
-    
-    <script>
-        function confirmDelete(projectId) {
-            if (confirm('Are you sure you want to delete this project?')) {
-                document.getElementById('delete-project-id').value = projectId;
-                document.getElementById('delete-project-form').submit();
-            }
-        }
-    </script>
-    <style>
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
+{% extends "base.html" %}
 
-        .sidebar ul {
-            flex-grow: 1;
-        }
+{% block title %}Project Room{% endblock %}
 
-        .logout-btn {
-            margin-top: auto;
-            padding: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <h2>Projects</h2>
-        <ul>
-            {% for project in projects %}
-                <li>
-                    <a href="{{ url_for('project_page', project_id=project.id) }}">{{ project.name }}</a>
-                    <button type="button" onclick='confirmDelete({{ project.id }})'>Delete</button>
-                </li>
-            {% endfor %}
-        </ul>
-        <form method="POST" action="{{ url_for('project_room') }}" id="delete-project-form" style="display:none;">
-            {{ delete_project_form.hidden_tag() }}
-            <input type="hidden" id="delete-project-id" name="id">
-            <input type="hidden" name="form_type" value="delete_project">
-            <button type="submit" id="delete-project-submit">Submit</button>
-        </form>
-        <div class="logout-btn">
-            <a href="{{ url_for('settings') }}">
-                <button>Settings</button>
-            </a>
-            <a href="{{ url_for('logout') }}">
-                <button>Logout</button>
-            </a>
-        </div>
-    </div>
-    <div class="main-content">
-        <h1>Project Room</h1>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        {% for category, message in messages %}
-                            toastr["{{ category }}"]("{{ message }}");
-                        {% endfor %}
-                    });
-                </script>
+{% block content %}
+<div class="sidebar">
+    <h2>Projects</h2>
+    <ul>
+        {% for project in projects %}
+            <li>
+                <a href="{{ url_for('project_page', project_id=project.id) }}">{{ project.name }}</a>
+                <button type="button" onclick='confirmDelete({{ project.id }})'>Delete</button>
+            </li>
+        {% endfor %}
+    </ul>
+    <form method="POST" action="{{ url_for('project_room') }}" id="delete-project-form" style="display:none;">
+        {{ delete_project_form.hidden_tag() }}
+        <input type="hidden" id="delete-project-id" name="id">
+        <input type="hidden" name="form_type" value="delete_project">
+        <button type="submit" id="delete-project-submit">Submit</button>
+    </form>
+</div>
+<div class="main-content">
+    <h1>Project Room</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    {% for category, message in messages %}
+                        toastr["{{ category }}"]("{{ message }}");
+                    {% endfor %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
+
+    <h2>Create a New Project</h2>
+    <form method="POST" action="{{ url_for('project_room') }}">
+        {{ project_form.hidden_tag() }}
+        <input type="hidden" name="create_project" value="true">
+        <div>
+            {{ project_form.name.label }}
+            {{ project_form.name }}
+            {% if project_form.name.errors %}
+                <ul>
+                    {% for error in project_form.name.errors %}
+                        <li style="color: red;">{{ error }}</li>
+                    {% endfor %}
+                </ul>
             {% endif %}
-        {% endwith %}
-
-        <h2>Create a New Project</h2>
-        <form method="POST" action="{{ url_for('project_room') }}">
-            {{ project_form.hidden_tag() }}
-            <input type="hidden" name="create_project" value="true">
-            <div>
-                {{ project_form.name.label }}
-                {{ project_form.name }}
-                {% if project_form.name.errors %}
-                    <ul>
-                        {% for error in project_form.name.errors %}
-                            <li style="color: red;">{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
-            <div>
-                {{ project_form.git_url.label }}
-                {{ project_form.git_url }}
-                {% if project_form.git_url.errors %}
-                    <ul>
-                        {% for error in project_form.git_url.errors %}
-                            <li style="color: red;">{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
-            <div>
-                <button type="submit">{{ project_form.submit.label }}</button>
-            </div>
-        </form>
-    </div>
-</body>
-</html>
+        </div>
+        <div>
+            {{ project_form.git_url.label }}
+            {{ project_form.git_url }}
+            {% if project_form.git_url.errors %}
+                <ul>
+                    {% for error in project_form.git_url.errors %}
+                        <li style="color: red;">{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div>
+            <button type="submit">{{ project_form.submit.label }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
