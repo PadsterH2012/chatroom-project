@@ -13,7 +13,7 @@
     <div class="columns">
         <div class="column">
             <h2>Settings</h2>
-            <form method="POST" action="{{ url_for('settings') }}">
+            <form method="POST" action="{{ url_for('settings.settings') }}">
                 {{ settings_form.hidden_tag() }}
                 <div>
                     {{ settings_form.ollama_url.label }}
@@ -39,7 +39,7 @@
 
         <div class="column">
             <h2>Manage Agents</h2>
-            <form method="POST" action="{{ url_for('settings') }}">
+            <form method="POST" action="{{ url_for('settings.settings') }}">
                 {{ agent_form.hidden_tag() }}
                 <div>
                     {{ agent_form.name.label }}
@@ -64,8 +64,8 @@
                     {% for agent in agents %}
                         <li>
                             <span>{{ agent.name }} ({{ agent.model }})</span>
-                            <form method="POST" action="{{ url_for('settings') }}" style="display:inline;">
-                                {{ agent_form.hidden_tag() }}
+                            <form method="POST" action="{{ url_for('settings.settings') }}" style="display:inline;">
+                                {{ settings_form.csrf_token }}
                                 <input type="hidden" name="agent_id" value="{{ agent.id }}">
                                 <button type="submit" name="remove_agent" value="remove_agent">Remove</button>
                             </form>
@@ -78,10 +78,10 @@
 
     <div class="export-import">
         <h2>Export/Import Settings</h2>
-        <form method="GET" action="{{ url_for('export_settings') }}">
+        <form method="GET" action="{{ url_for('settings.export_settings') }}">
             <button type="submit">Export Settings</button>
         </form>
-        <form method="POST" action="{{ url_for('import_settings') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('settings.import_settings') }}" enctype="multipart/form-data">
             {{ settings_form.csrf_token }}
             <input type="file" name="settings_file">
             <button type="submit">Import Settings</button>

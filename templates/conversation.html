@@ -57,7 +57,7 @@
         <div class="section">
             <p><strong>Steps:</strong> {{ project.steps or "Example waffle placeholder" }}</p>
         </div>
-        <a href="{{ url_for('edit_project', project_id=project.id) }}" class="btn btn-primary">Edit</a>
+        <a href="{{ url_for('project.edit_project', project_id=project.id) }}" class="btn btn-primary">Edit</a>
     </div>
 </div>
 
@@ -111,7 +111,7 @@
                 message: message
             };
 
-            fetch('{{ url_for('send_message') }}', {
+            fetch('{{ url_for('chat.send_message') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -170,7 +170,7 @@
         const projectId = {{ project.id }};
         const payload = { project_id: projectId };
 
-        fetch('{{ url_for('clone_and_ingest', project_id=project.id) }}', {
+        fetch('{{ url_for('project.clone_and_ingest', project_id=project.id) }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

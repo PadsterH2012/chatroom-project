@@ -24,36 +24,36 @@
     </div>
     <ul class="nav-links">
       <li>
-        <a href="{{ url_for('project_room') }}">
-          <i class='bx bx-grid-alt' ></i>
+        <a href="{{ url_for('project.project_room') }}">
+          <i class='bx bx-grid-alt'></i>
           <span class="link_name">Project Room</span>
         </a>
         <ul class="sub-menu blank">
-          <li><a class="link_name" href="{{ url_for('project_room') }}">Project Room</a></li>
+          <li><a class="link_name" href="{{ url_for('project.project_room') }}">Project Room</a></li>
         </ul>
       </li>
       <li>
         <div class="iocn-link">
           <a href="#">
-            <i class='bx bx-collection' ></i>
+            <i class='bx bx-collection'></i>
             <span class="link_name">Projects</span>
           </a>
-          <i class='bx bxs-chevron-down arrow' ></i>
+          <i class='bx bxs-chevron-down arrow'></i>
         </div>
         <ul class="sub-menu">
-          <li><a class="link_name" href="{{ url_for('project_room') }}">Projects</a></li>
+          <li><a class="link_name" href="{{ url_for('project.project_room') }}">Projects</a></li>
           {% for project in projects %}
-            <li><a href="{{ url_for('project_page', project_id=project.id) }}">{{ project.name }}</a></li>
+            <li><a href="{{ url_for('project.project_page', project_id=project.id) }}">{{ project.name }}</a></li>
           {% endfor %}
         </ul>
       </li>
       <li>
-        <a href="{{ url_for('settings') }}">
-          <i class='bx bx-cog' ></i>
+        <a href="{{ url_for('settings.settings') }}">
+          <i class='bx bx-cog'></i>
           <span class="link_name">Settings</span>
         </a>
         <ul class="sub-menu blank">
-          <li><a class="link_name" href="#">Settings</a></li>
+          <li><a class="link_name" href="{{ url_for('settings.settings') }}">Settings</a></li>
         </ul>
       </li>
       <li>
@@ -65,7 +65,7 @@
                 <div class="profile_name">{{ current_user.username }}</div>
                 <div class="job">{{ current_user.role }}</div>
             </div>
-            <a href="{{ url_for('logout') }}">
+            <a href="{{ url_for('auth.logout') }}">
                 <i class='bx bx-log-out'></i>
             </a>
         </div>
@@ -74,7 +74,7 @@
   </div>
   <section class="home-section">
     <div class="home-content">
-      <i class='bx bx-menu' ></i>
+      <i class='bx bx-menu'></i>
       <span class="text"></span>
     </div>
     

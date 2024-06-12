@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
+from extensions import db
 from flask_login import UserMixin
-
-db = SQLAlchemy()
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -15,8 +13,8 @@ class Project(db.Model):
     description = db.Column(db.Text, nullable=True)
     objectives = db.Column(db.Text, nullable=True)
     goals = db.Column(db.Text, nullable=True)
-    features = db.Column(db.Text, nullable=True)  # Add this line
-    steps = db.Column(db.Text, nullable=True)  # Add this line
+    features = db.Column(db.Text, nullable=True)
+    steps = db.Column(db.Text, nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
     git_url = db.Column(db.String(256), nullable=True)
@@ -33,7 +31,6 @@ class Project(db.Model):
         self.end_date = end_date
         self.git_url = git_url
         self.ingested_code = ingested_code
-
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
