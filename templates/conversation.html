@@ -40,17 +40,24 @@
             <p><strong>Project Name:</strong> {{ project.name }}</p>
         </div>
         <div class="section">
+            <p><strong>Description:</strong> {{ project.description }}</p>
+        </div>
+        <div class="section">
             <p><strong>Git URL:</strong> <a href="{{ project.git_url }}" target="_blank">{{ project.git_url }}</a></p>
         </div>
         <div class="section">
-            <p><strong>Goals:</strong> Example waffle placeholder</p>
+            <p><strong>Goals:</strong> {{ project.goals or "Example waffle placeholder" }}</p>
         </div>
         <div class="section">
-            <p><strong>Objective:</strong> Example waffle placeholder</p>
+            <p><strong>Objectives:</strong> {{ project.objectives or "Example waffle placeholder" }}</p>
         </div>
         <div class="section">
-            <p><strong>Features:</strong> Example waffle placeholder</p>
+            <p><strong>Features:</strong> {{ project.features or "Example waffle placeholder" }}</p>
         </div>
+        <div class="section">
+            <p><strong>Steps:</strong> {{ project.steps or "Example waffle placeholder" }}</p>
+        </div>
+        <a href="{{ url_for('edit_project', project_id=project.id) }}" class="btn btn-primary">Edit</a>
     </div>
 </div>
 
@@ -156,39 +163,6 @@
                 .catch(error => console.error('Error:', error));
         } else {
             alert('Please select an agent and type a message.');
-        }
-    }
-
-    function sendQuery() {
-        const query = document.getElementById('query').value;
-        const projectId = {{ project.id }};
-
-        if (query.trim() !== '') {
-            const payload = {
-                project_id: projectId,
-                query: query
-            };
-
-            fetch('{{ url_for('query_agent') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(payload)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        console.error('Error:', data.error);
-                        document.getElementById('query-response').innerText = data.error;
-                    } else {
-                        document.getElementById('query-response').innerText = data.response;
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        } else {
-            alert('Please type a query.');
         }
     }
 

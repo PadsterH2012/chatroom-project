@@ -2,8 +2,8 @@ import requests
 from flask import render_template, request, redirect, url_for, flash, jsonify, send_file, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Project, Agent, Config, Conversation, Message
-from forms import LoginForm, RegistrationForm, ProjectForm, DeleteProjectForm, SettingsForm, AgentForm, EditGitUrlForm, CloneIngestForm
+from models import db, User, Project, Agent, Config, Conversation, Message, Project
+from forms import LoginForm, RegistrationForm, ProjectForm, DeleteProjectForm, SettingsForm, AgentForm, EditGitUrlForm, CloneIngestForm, EditProjectForm
 from datetime import datetime
 from flask_wtf.csrf import CSRFProtect
 import logging
@@ -192,7 +192,9 @@ def init_routes(app):
         return True
 
 
-    @app.route('/send_message', methods=['POST'], endpoint='send_message')
+
+
+    @app.route('/send_message', methods=['POST'])
     @login_required
     def send_message():
         data = request.json
@@ -203,6 +205,24 @@ def init_routes(app):
         if not project_id or not agent_id or not message_text:
             logging.error('Invalid request data')
             return jsonify({'error': 'Invalid request data'}), 400
+
+        # Fetch project details
+        project = Project.query.get(project_id)
+        if not project:
+            logging.error('Project not found')
+            return jsonify({'error': 'Project not found'}), 404
+
+        # Check if the message is "Tell me about the project"
+        if message_text.lower() == "tell me about the project":
+            project_details = f"""
+            Project Name: {project.name}
+            Description: {project.description or "No description available"}
+            Goals: {project.goals or "No goals specified"}
+            Objectives: {project.objectives or "No objectives specified"}
+            Features: {project.features or "No features listed"}
+            Steps: {project.steps or "No steps provided"}
+            """
+            message_text += f"\n\n{project_details}"
 
         # Save user message to the database
         conversation = Conversation.query.filter_by(project_id=project_id).first()
@@ -215,7 +235,7 @@ def init_routes(app):
         db.session.add(user_message)
         db.session.commit()
 
-        # Get the agent and its associated Ollama URL from the database
+        # Get the agent and its associated URL from the database
         agent = Agent.query.get(agent_id)
         config = Config.query.first()
 
@@ -227,10 +247,6 @@ def init_routes(app):
             logging.error('Configuration not found')
             return jsonify({'error': 'Configuration not found'}), 404
 
-        # Include the ingested code context if available
-        project = get_project(project_id)
-        code_context = json.loads(project.ingested_code) if project.ingested_code else []
-
         # Prepare payload for the agent
         if agent.is_openai:
             openai_url = 'https://api.openai.com/v1/chat/completions'
@@ -238,15 +254,12 @@ def init_routes(app):
                 'Authorization': f'Bearer {config.openai_api_key}',
                 'Content-Type': 'application/json'
             }
-            # Construct the messages for the chat completion
-            messages = [{'role': 'system', 'content': 'You are a helpful assistant.'}]
-            for code_snippet in code_context:
-                messages.append({'role': 'system', 'content': code_snippet})
-            messages.append({'role': 'user', 'content': message_text})
-            
             payload = {
                 'model': agent.model,
-                'messages': messages,
+                'messages': [
+                    {'role': 'system', 'content': 'You are a helpful assistant.'},
+                    {'role': 'user', 'content': message_text}
+                ],
                 'max_tokens': 150,
                 'temperature': 0.7,
                 'top_p': 1.0,
@@ -257,13 +270,9 @@ def init_routes(app):
             }
 
             try:
-                logging.info(f"Sending request to OpenAI API: {openai_url}")
-                logging.info(f"Payload: {payload}")
                 response = requests.post(openai_url, json=payload, headers=headers)
-                logging.info(f"Response status code: {response.status_code}")
-                logging.info(f"Response content: {response.content}")
                 response.raise_for_status()
-
+                logging.info(f"OpenAI API response: {response.content}")
                 openai_response = response.json()
                 agent_reply = openai_response['choices'][0]['message']['content'].strip()
 
@@ -296,23 +305,24 @@ def init_routes(app):
             payload = {
                 'model': model_name,
                 'prompt': message_text,
-                'context': code_context
+                'context': []  # Add any additional context if needed
             }
 
             try:
-                logging.info(f"Sending request to Ollama API: {ollama_url}")
-                logging.info(f"Payload: {payload}")
-                response = requests.post(ollama_url, json=payload, headers=headers)
-                logging.info(f"Response status code: {response.status_code}")
-                logging.info(f"Response content: {response.content}")
+                response = requests.post(ollama_url, json=payload, headers=headers, stream=True)
                 response.raise_for_status()
+                logging.info(f"Ollama API response: {response.content}")
 
-                # Handle the streaming response
                 agent_reply = ""
+
+                # Parse streaming response
                 for line in response.iter_lines():
                     if line:
-                        json_line = json.loads(line)
-                        agent_reply += json_line['response']
+                        json_line = json.loads(line.decode('utf-8'))
+                        if 'response' in json_line:
+                            agent_reply += json_line['response']
+                        if json_line.get('done'):
+                            break
 
                 # Save agent's reply to the database
                 agent_message = Message(
@@ -473,6 +483,27 @@ def init_routes(app):
                 flash(f'Failed to import settings: {str(e)}', 'error')
 
         return redirect(url_for('settings'))
+
+    @app.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
+    @login_required
+    def edit_project(project_id):
+        project = Project.query.get_or_404(project_id)
+        form = EditProjectForm(obj=project)
+
+        if form.validate_on_submit():
+            project.name = form.name.data
+            project.description = form.description.data
+            project.git_url = form.git_url.data
+            project.goals = form.goals.data
+            project.objectives = form.objectives.data
+            project.features = form.features.data
+            project.steps = form.steps.data
+            db.session.commit()
+            flash('Project updated successfully!', 'success')
+            return redirect(url_for('project_page', project_id=project.id))
+
+        return render_template('edit_project.html', form=form, project=project)
+
 
     @app.route('/query_agent', methods=['POST'])
     @login_required

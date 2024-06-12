@@ -15,20 +15,25 @@ class Project(db.Model):
     description = db.Column(db.Text, nullable=True)
     objectives = db.Column(db.Text, nullable=True)
     goals = db.Column(db.Text, nullable=True)
+    features = db.Column(db.Text, nullable=True)  # Add this line
+    steps = db.Column(db.Text, nullable=True)  # Add this line
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
     git_url = db.Column(db.String(256), nullable=True)
-    ingested_code = db.Column(db.Text, nullable=True)  # Add this line
+    ingested_code = db.Column(db.Text, nullable=True)
 
-    def __init__(self, name, description=None, objectives=None, goals=None, start_date=None, end_date=None, git_url=None, ingested_code=None):
+    def __init__(self, name, description=None, objectives=None, goals=None, features=None, steps=None, start_date=None, end_date=None, git_url=None, ingested_code=None):
         self.name = name
         self.description = description
         self.objectives = objectives
         self.goals = goals
+        self.features = features
+        self.steps = steps
         self.start_date = start_date
         self.end_date = end_date
         self.git_url = git_url
         self.ingested_code = ingested_code
+
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)

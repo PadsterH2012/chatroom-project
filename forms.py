@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
+from wtforms.validators import DataRequired, Length, Email, EqualTo, URL
 from models import User
 
 class LoginForm(FlaskForm):
@@ -22,6 +22,16 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(username=username.data).first()
         if user is not None:
             raise ValidationError('Please use a different username.')
+        
+class EditProjectForm(FlaskForm):
+    name = StringField('Project Name', validators=[DataRequired()])
+    description = TextAreaField('Description')
+    git_url = StringField('Git URL', validators=[URL()])
+    goals = TextAreaField('Goals')
+    objectives = TextAreaField('Objectives')
+    features = TextAreaField('Features')
+    steps = TextAreaField('Steps')
+    submit = SubmitField('Update Project')
 
 class ProjectForm(FlaskForm):
     name = StringField('Project Name', validators=[DataRequired()])

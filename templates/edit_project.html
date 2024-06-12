@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Project{% endblock %}
+
+{% block content %}
+<div class="edit-project-container edit-project-full-width">
+    <h2 class="edit-project-title">Edit Project</h2>
+    <form method="POST" action="{{ url_for('edit_project', project_id=project.id) }}" class="edit-project-form">
+        {{ form.hidden_tag() }}
+        <div class="edit-project-form-group">
+            {{ form.name.label }}
+            {{ form.name }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.description.label }}
+            {{ form.description }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.git_url.label }}
+            {{ form.git_url }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.goals.label }}
+            {{ form.goals }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.objectives.label }}
+            {{ form.objectives }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.features.label }}
+            {{ form.features }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.steps.label }}
+            {{ form.steps }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.submit }}
+        </div>
+    </form>
+</div>
+{% endblock %}
