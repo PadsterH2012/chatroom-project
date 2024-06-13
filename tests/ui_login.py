@@ -37,7 +37,7 @@ class UITest(unittest.TestCase):
         register_button.click()
 
         # Check if registration was successful by finding a specific element
-        self.assertIn("Login", self.driver.page_source)
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1")))
 
     def test_login(self):
         self.driver.get("http://localhost:5000/auth/login")
@@ -48,6 +48,12 @@ class UITest(unittest.TestCase):
         username_field.send_keys("testuser")
         password_field.send_keys("password")
         login_button.click()
+
+        # Debug print to check current page source after login attempt
+        print(self.driver.page_source)
+
+        # Explicitly wait for the "Project Room" text to appear after login
+        WebDriverWait(self.driver, 10).until(EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Project Room"))
 
         # Check if login was successful by verifying the presence of "Project Room"
         self.assertIn("Project Room", self.driver.page_source)
