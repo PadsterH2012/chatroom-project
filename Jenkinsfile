@@ -37,7 +37,10 @@ pipeline {
             steps {
                 script {
                     echo 'Building Docker image...'
-                    sh 'docker build -t ${DOCKER_IMAGE}:${env.BUILD_NUMBER} .'
+                    // Ensure the correct shell is used
+                    sh '''#!/bin/bash
+                    docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                    '''
                 }
             }
         }
@@ -45,9 +48,12 @@ pipeline {
             steps {
                 script {
                     echo 'Pushing Docker image to DockerHub...'
+                    // Ensure the correct shell is used
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                        sh 'docker push ${DOCKER_IMAGE}:${env.BUILD_NUMBER}'
+                        sh '''#!/bin/bash
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                        '''
                     }
                 }
             }
