@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy the requirements file into the container at /app
 COPY requirements.txt requirements.txt
 
-# Install git
-RUN apt-get update && apt-get install -y git
+# Update the package list and install git, retrying if necessary
+RUN apt-get update && apt-get install -y --fix-missing git
 
 # Install any dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
