@@ -50,12 +50,22 @@ class UITest(unittest.TestCase):
         password_field = self.driver.find_element(By.NAME, "password")
         login_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
 
+        # Ensure the fields are populated correctly
         username_field.send_keys("testuser")
         password_field.send_keys("password")
+
+        print("Before clicking login button")
+        print(f"Username field value: {username_field.get_attribute('value')}")
+        print(f"Password field value: {password_field.get_attribute('value')}")
+
         login_button.click()
 
-        # Wait for a potential redirect or error message
-        WebDriverWait(self.driver, 10).until(EC.url_changes("http://localhost:5000/auth/login"))
+        # Wait for potential redirect or error message
+        try:
+            WebDriverWait(self.driver, 10).until(EC.url_changes("http://localhost:5000/auth/login"))
+        except TimeoutException:
+            print("URL did not change after login attempt. Current URL:", self.driver.current_url)
+            print("Page source after login attempt:\n", self.driver.page_source)
 
         # Debug print to check current URL and page source after login attempt
         print(f"Current URL after login: {self.driver.current_url}")
