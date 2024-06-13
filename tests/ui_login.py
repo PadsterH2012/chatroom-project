@@ -67,6 +67,13 @@ class UITest(unittest.TestCase):
         except TimeoutException:
             print("URL did not change after login attempt. Current URL:", self.driver.current_url)
             print("Page source after login attempt:\n", self.driver.page_source)
+            
+            # Check for CSRF error message
+            csrf_error = self.driver.find_elements(By.CSS_SELECTOR, ".flash-error")
+            if csrf_error:
+                print(f"CSRF error message: {csrf_error[0].text}")
+            
+            # Raise the exception to ensure the test fails
             raise
 
         # Debug print to check current URL and page source after login attempt
