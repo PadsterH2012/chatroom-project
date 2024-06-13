@@ -18,3 +18,4 @@ build
 repos
 instance
 migrations
+Jenkinsfile

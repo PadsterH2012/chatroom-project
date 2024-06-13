@@ -22,8 +22,7 @@ login_manager.login_view = 'auth.login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    with db.session() as session:
-        return session.get(User, int(user_id))
+    return User.query.get(int(user_id))
 
 with app.app_context():
     db.create_all()

@@ -1,3 +1,11 @@
+import sys
+import subprocess
+
+print("Python executable:", sys.executable)
+print("Python path:", sys.path)
+print("Installed packages:")
+subprocess.run([sys.executable, "-m", "pip", "list"])
+
 import requests
 from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
@@ -5,6 +13,12 @@ from models import db, Project, Conversation, Message, Agent, Config
 from datetime import datetime
 import logging
 import json
+
+try:
+    import markdown
+except ImportError as e:
+    logging.error("Markdown module not found. Make sure it is installed in your environment.")
+    raise e
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -20,6 +34,11 @@ def conversation(project_id):
 
     return render_template('conversation.html', project=project, messages=messages, agents=agents, agents_dict=agents_dict)
 
+# Add this function to convert markdown to HTML
+def render_markdown(text):
+    return markdown.markdown(text, extensions=['fenced_code', 'codehilite'])
+
+# Update the send_message function
 @chat_bp.route('/send_message', methods=['POST'])
 @login_required
 def send_message():
@@ -102,18 +121,21 @@ def send_message():
             openai_response = response.json()
             agent_reply = openai_response['choices'][0]['message']['content'].strip()
 
+            # Render markdown in agent reply
+            agent_reply_html = render_markdown(agent_reply)
+
             # Save agent's reply to the database
             agent_message = Message(
                 conversation_id=conversation.id,
                 user_id=None,
                 agent_id=agent.id,
-                text=agent_reply,
+                text=agent_reply_html,
                 timestamp=datetime.utcnow()
             )
             db.session.add(agent_message)
             db.session.commit()
 
-            return jsonify({'reply': agent_reply, 'agent_name': agent.name})
+            return jsonify({'reply': agent_reply_html, 'agent_name': agent.name})
 
         except requests.RequestException as e:
             logging.error(f'Failed to communicate with agent: {str(e)}')
@@ -150,18 +172,21 @@ def send_message():
                     if json_line.get('done'):
                         break
 
+            # Render markdown in agent reply
+            agent_reply_html = render_markdown(agent_reply)
+
             # Save agent's reply to the database
             agent_message = Message(
                 conversation_id=conversation.id,
                 user_id=None,
                 agent_id=agent.id,
-                text=agent_reply.strip(),
+                text=agent_reply_html.strip(),
                 timestamp=datetime.utcnow()
             )
             db.session.add(agent_message)
             db.session.commit()
 
-            return jsonify({'reply': agent_reply.strip(), 'agent_name': agent.name})
+            return jsonify({'reply': agent_reply_html.strip(), 'agent_name': agent.name})
 
         except requests.RequestException as e:
             logging.error(f'Failed to communicate with agent: {str(e)}')

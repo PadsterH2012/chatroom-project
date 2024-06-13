@@ -1,5 +1,7 @@
-from extensions import db
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+
+db = SQLAlchemy()
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,9 +38,11 @@ class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, nullable=False)
     messages = db.relationship('Message', backref='conversation', lazy=True)
+    context = db.Column(db.Text, nullable=True)
 
-    def __init__(self, project_id):
+    def __init__(self, project_id, context=None):
         self.project_id = project_id
+        self.context = context
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,18 +63,24 @@ class Agent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
     model = db.Column(db.String(64), nullable=False)
-    is_openai = db.Column(db.Boolean, default=False)  # Specify if the agent is for OpenAI
+    is_openai = db.Column(db.Boolean, default=False)
+    avatar = db.Column(db.String(256), nullable=True)
+    color = db.Column(db.String(7), default="#3498db")
 
-    def __init__(self, name, model, is_openai=False):
+    def __init__(self, name, model, is_openai=False, avatar=None, color="#3498db"):
         self.name = name
         self.model = model
         self.is_openai = is_openai
+        self.avatar = avatar
+        self.color = color
 
     def to_dict(self):
         return {
             'name': self.name,
             'model': self.model,
-            'is_openai': self.is_openai
+            'is_openai': self.is_openai,
+            'avatar': self.avatar,
+            'color': self.color
         }
 
     @staticmethod
@@ -78,8 +88,14 @@ class Agent(db.Model):
         return Agent(
             name=data['name'],
             model=data['model'],
-            is_openai=data.get('is_openai', False)
+            is_openai=data.get('is_openai', False),
+            avatar=data.get('avatar'),
+            color=data.get('color', "#3498db")
         )
+
+    @property
+    def initials(self):
+        return ''.join([word[0] for word in self.name.split()]).upper()
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)

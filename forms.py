@@ -46,17 +46,14 @@ class SettingsForm(FlaskForm):
     ollama_url = StringField('Ollama URL', validators=[DataRequired()])
     ollama_key = StringField('Ollama Key', validators=[DataRequired()])
     model_name = StringField('Model Name', validators=[DataRequired()])
-    chatgpt_url = StringField('ChatGPT URL', validators=[DataRequired()])
-    chatgpt_key = StringField('ChatGPT Key', validators=[DataRequired()])
-    chatgpt_model = StringField('ChatGPT Model', validators=[DataRequired()])
     openai_api_key = StringField('OpenAI API Key', validators=[DataRequired()])
-    submit = SubmitField('Update Settings')
+    submit = SubmitField('Save Settings')
 
 class AgentForm(FlaskForm):
     name = StringField('Agent Name', validators=[DataRequired()])
     model = StringField('Model', validators=[DataRequired()])
-    is_openai = BooleanField('Is OpenAI Agent')
-    create_agent = SubmitField('Create Agent')
+    is_openai = BooleanField('Is OpenAI')
+    submit = SubmitField('Create Agent')
 
 class EditGitUrlForm(FlaskForm):
     git_url = StringField('Git URL', validators=[DataRequired()])

@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
-from models import db, Config, Agent, Project
+from models import db, Config, Agent, Project, Conversation, Message
 from forms import SettingsForm, AgentForm
 import json
 from io import BytesIO
+from datetime import datetime
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -35,26 +36,29 @@ def settings():
         flash('Settings updated successfully!', 'success')
         return redirect(url_for('settings.settings'))
 
-    if agent_form.validate_on_submit():
-        if 'create_agent' in request.form:
-            new_agent = Agent(name=agent_form.name.data, model=agent_form.model.data, is_openai=agent_form.is_openai.data)
-            db.session.add(new_agent)
-            db.session.commit()
-            flash('Agent created successfully!', 'success')
-        elif 'remove_agent' in request.form:
-            agent_id = request.form.get('agent_id')
-            agent = Agent.query.get(agent_id)
-            if agent:
-                db.session.delete(agent)
-                db.session.commit()
-                flash('Agent removed successfully!', 'success')
-            else:
-                flash('Agent not found!', 'error')
+    if agent_form.validate_on_submit() and 'create_agent' in request.form:
+        new_agent = Agent(name=agent_form.name.data, model=agent_form.model.data, is_openai=agent_form.is_openai.data)
+        db.session.add(new_agent)
+        db.session.commit()
+        flash('Agent created successfully!', 'success')
         return redirect(url_for('settings.settings'))
 
     agents = Agent.query.all()
     projects = Project.query.all()
     return render_template('settings.html', settings_form=settings_form, agent_form=agent_form, agents=agents, projects=projects)
+
+@settings_bp.route('/remove_agent', methods=['POST'])
+@login_required
+def remove_agent():
+    agent_id = request.form.get('agent_id')
+    agent = Agent.query.get(agent_id)
+    if agent:
+        db.session.delete(agent)
+        db.session.commit()
+        flash('Agent removed successfully!', 'success')
+    else:
+        flash('Agent not found!', 'error')
+    return redirect(url_for('settings.settings'))
 
 @settings_bp.route('/export_settings', methods=['GET'])
 @login_required
@@ -118,5 +122,98 @@ def import_settings():
             flash('Settings imported successfully!', 'success')
         except Exception as e:
             flash(f'Failed to import settings: {str(e)}', 'error')
+
+    return redirect(url_for('settings.settings'))
+
+@settings_bp.route('/export_projects', methods=['GET', 'POST'])
+@login_required
+def export_projects():
+    if request.method == 'POST':
+        project_ids = request.form.getlist('project_ids')
+        if not project_ids:
+            flash('No projects selected for export.', 'error')
+            return redirect(url_for('settings.export_projects'))
+
+        project_data = []
+        for project_id in project_ids:
+            project = Project.query.get(project_id)
+            if project:
+                project_info = {
+                    'name': project.name,
+                    'description': project.description,
+                    'git_url': project.git_url,
+                    'goals': project.goals,
+                    'objectives': project.objectives,
+                    'features': project.features,
+                    'steps': project.steps,
+                    'conversations': [
+                        {
+                            'text': message.text,
+                            'timestamp': message.timestamp.isoformat(),
+                            'user_id': message.user_id,
+                            'agent_id': message.agent_id
+                        } for message in Message.query.filter_by(conversation_id=project.id).all()
+                    ]
+                }
+                project_data.append(project_info)
+
+        output = BytesIO()
+        filename = f"project_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        output.write(json.dumps(project_data).encode('utf-8'))
+        output.seek(0)
+
+        return send_file(output, as_attachment=True, download_name=filename, mimetype='application/json')
+
+    projects = Project.query.all()
+    return render_template('export_projects.html', projects=projects)
+
+@settings_bp.route('/import_projects', methods=['POST'])
+@login_required
+def import_projects():
+    if 'projects_file' not in request.files:
+        flash('No file part', 'error')
+        return redirect(url_for('settings.settings'))
+
+    file = request.files['projects_file']
+    if file.filename == '':
+        flash('No selected file', 'error')
+        return redirect(url_for('settings.settings'))
+
+    if file:
+        try:
+            projects_data = json.load(file)
+            for project_data in projects_data:
+                project_info = project_data['project']
+                project = Project(
+                    name=project_info['name'],
+                    description=project_info['description'],
+                    git_url=project_info['git_url'],
+                    goals=project_info['goals'],
+                    objectives=project_info['objectives'],
+                    features=project_info['features'],
+                    steps=project_info['steps']
+                )
+                db.session.add(project)
+                db.session.commit()
+
+                for conversation_data in project_data['conversations']:
+                    conversation = Conversation(project_id=project.id)
+                    db.session.add(conversation)
+                    db.session.commit()
+
+                    for message_data in conversation_data['messages']:
+                        message = Message(
+                            conversation_id=conversation.id,
+                            text=message_data['text'],
+                            timestamp=datetime.fromisoformat(message_data['timestamp']),
+                            agent_id=message_data['agent_id'],
+                            user_id=message_data['user_id']
+                        )
+                        db.session.add(message)
+                        db.session.commit()
+
+            flash('Projects imported successfully!', 'success')
+        except Exception as e:
+            flash(f'Failed to import projects: {str(e)}', 'error')
 
     return redirect(url_for('settings.settings'))

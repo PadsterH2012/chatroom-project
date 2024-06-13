@@ -1,10 +1,5 @@
 {% extends "base.html" %}
 
-{% block head %}
-    {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='settings.css') }}">
-{% endblock %}
-
 {% block title %}Settings{% endblock %}
 
 {% block content %}
@@ -32,7 +27,7 @@
                     {{ settings_form.openai_api_key }}
                 </div>
                 <div>
-                    <button type="submit">{{ settings_form.submit.label }}</button>
+                    <button type="submit" name="submit">{{ settings_form.submit.label }}</button>
                 </div>
             </form>
         </div>
@@ -54,7 +49,7 @@
                     {{ agent_form.is_openai }}
                 </div>
                 <div>
-                    <button type="submit">{{ agent_form.create_agent.label }}</button>
+                    <button type="submit" name="create_agent">{{ agent_form.submit.label }}</button>
                 </div>
             </form>
 
@@ -64,10 +59,10 @@
                     {% for agent in agents %}
                         <li>
                             <span>{{ agent.name }} ({{ agent.model }})</span>
-                            <form method="POST" action="{{ url_for('settings.settings') }}" style="display:inline;">
-                                {{ settings_form.csrf_token }}
+                            <form method="POST" action="{{ url_for('settings.remove_agent') }}" style="display:inline;">
+                                {{ agent_form.hidden_tag() }}
                                 <input type="hidden" name="agent_id" value="{{ agent.id }}">
-                                <button type="submit" name="remove_agent" value="remove_agent">Remove</button>
+                                <button type="submit" name="remove_agent">Remove</button>
                             </form>
                         </li>
                     {% endfor %}
@@ -85,6 +80,16 @@
             {{ settings_form.csrf_token }}
             <input type="file" name="settings_file">
             <button type="submit">Import Settings</button>
+        </form>
+
+        <h2>Export/Import Projects</h2>
+        <form method="GET" action="{{ url_for('settings.export_projects') }}">
+            <button type="submit">Export Projects</button>
+        </form>
+        <form method="POST" action="{{ url_for('settings.import_projects') }}" enctype="multipart/form-data">
+            {{ settings_form.csrf_token }}
+            <input type="file" name="projects_file">
+            <button type="submit">Import Projects</button>
         </form>
     </div>
 </div>
