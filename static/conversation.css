@@ -112,12 +112,13 @@ body {
     margin-top: 10px;
 }
 
-.message-input input[type="text"] {
+.message-input textarea {
     flex-grow: 1;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ddd;
     margin-right: 10px;
+    resize: vertical; /* Allows the user to resize the textarea vertically */
 }
 
 .message-input button {

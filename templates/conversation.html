@@ -28,7 +28,7 @@
             </select>
         </div>
         <div class="message-input">
-            <input type="text" id="message" placeholder="Type your message here" onkeydown="if(event.key === 'Enter') sendMessage()">
+            <textarea id="message" placeholder="Type your message here" rows="3" onkeydown="handleKeyDown(event)"></textarea>
             <button type="button" onclick="sendMessage()">Send</button>
         </div>
     </div>
@@ -105,8 +105,16 @@
         return response;
     }
 
+    function handleKeyDown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); // Prevent the default behavior of creating a new line
+            sendMessage(); // Call the sendMessage function
+        }
+    }
+
     function sendMessage() {
-        const message = document.getElementById('message').value;
+        const messageElement = document.getElementById('message');
+        const message = messageElement.value;
         const agentId = document.getElementById('agent').value;
 
         if (message.trim() !== '' && agentId) {
@@ -135,7 +143,7 @@
                         const userMessage = document.createElement('div');
                         userMessage.classList.add('message', 'user-message');
                         userMessage.innerHTML = `
-                            <div class="message-text">${message} <span class="timestamp">${new Date().toLocaleString()}</span></div>
+                            <div class="message-text">${message.replace(/\n/g, '<br>')} <span class="timestamp">${new Date().toLocaleString()}</span></div>
                         `;
                         conversationWindow.appendChild(userMessage);
 
@@ -148,7 +156,7 @@
                         conversationWindow.appendChild(agentMessage);
 
                         conversationWindow.scrollTop = conversationWindow.scrollHeight;
-                        document.getElementById('message').value = '';
+                        messageElement.value = '';
 
                         // Re-run highlight.js on new code blocks
                         document.querySelectorAll('pre code').forEach((block) => {
