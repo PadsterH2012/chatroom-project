@@ -158,6 +158,7 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     position: relative;
+    overflow-y: auto; /* Add scrollbar when content exceeds height */
 }
 
 .project-details h2, .project-details p {
