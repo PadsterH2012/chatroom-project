@@ -22,9 +22,20 @@ class UITest(unittest.TestCase):
     def tearDownClass(cls):
         cls.driver.quit()
 
-    def test_load_page(self):
-        self.driver.get("http://localhost:5000/")
-        self.assertIn("Home", self.driver.title)
+    def test_register(self):
+        self.driver.get("http://localhost:5000/auth/register")
+        username_field = self.driver.find_element(By.NAME, "username")
+        password_field = self.driver.find_element(By.NAME, "password")
+        confirm_field = self.driver.find_element(By.NAME, "confirm")
+        register_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+
+        username_field.send_keys("testuser")
+        password_field.send_keys("password")
+        confirm_field.send_keys("password")
+        register_button.click()
+
+        # Check if registration was successful by finding a specific element, for example, the logout button
+        self.assertTrue(self.driver.find_element(By.ID, "logout").is_displayed())
 
     def test_login(self):
         self.driver.get("http://localhost:5000/auth/login")
@@ -36,6 +47,7 @@ class UITest(unittest.TestCase):
         password_field.send_keys("password")
         login_button.click()
 
+        # Check if login was successful by finding a specific element, for example, the logout button
         self.assertTrue(self.driver.find_element(By.ID, "logout").is_displayed())
 
 if __name__ == "__main__":
