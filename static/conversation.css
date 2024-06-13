@@ -10,23 +10,25 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     gap: 20px; /* Add space between conversation and project details */
+    height: 90vh; /* Adjust the container height to ensure full visibility */
 }
 
 .conversation {
     width: 70%;
     display: flex;
     flex-direction: column;
+    height: 100%; /* Ensure conversation takes full height */
 }
 
 .conversation-window {
     flex-grow: 1;
-    height: 80vh; /* 80% of the window height */
     background-color: #2c2c2c;
     color: white;
     padding: 20px;
     border-radius: 10px;
     overflow-y: auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px; /* Add margin to ensure inputs are visible */
 }
 
 .message {
@@ -149,7 +151,7 @@ body {
 
 .project-details {
     width: 28%;
-    height: 80vh; /* 80% of the window height */
+    height: 100%; /* Ensure project details take full height */
     padding: 20px;
     background-color: #f9f9f9;
     border-radius: 10px;
@@ -157,8 +159,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    position: relative;
-    overflow-y: auto; /* Add scrollbar when content exceeds height */
+    overflow-y: auto; /* Add scrollbar */
 }
 
 .project-details h2, .project-details p {
@@ -169,9 +170,8 @@ body {
     display: flex;
     align-items: center;
     margin-top: 10px;
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    position: sticky;
+    top: 20px; /* Keep ingest section visible */
 }
 
 .project-details .ingest-section button {
