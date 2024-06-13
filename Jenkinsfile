@@ -83,9 +83,9 @@ pipeline {
                     echo 'Running unit and UI tests...'
                     sh '''#!/bin/bash
                     export DISPLAY=:99.0
-                    export PATH=${CHROME_INSTALL_DIR}:$PATH
                     nohup Xvfb :99 -ac &
                     sleep 3
+                    echo "Running tests..."
                     ./venv/bin/python -m unittest discover -s tests -p "*.py"
                     '''
                 }
