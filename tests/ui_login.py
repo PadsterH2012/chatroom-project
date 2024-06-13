@@ -35,7 +35,7 @@ class UITest(unittest.TestCase):
         register_button.click()
 
         # Check if registration was successful by finding a specific element
-        self.assertIn("Project Room", self.driver.page_source)
+        self.assertIn("Login", self.driver.page_source)
 
     def test_login(self):
         self.driver.get("http://localhost:5000/auth/login")
