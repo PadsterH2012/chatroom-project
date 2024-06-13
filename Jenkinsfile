@@ -5,7 +5,7 @@ pipeline {
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         DOCKER_IMAGE = 'padster2012/test-chat'
         CHROME_DRIVER_VERSION = '114.0.5735.90'
-        CHROME_INSTALL_DIR = "/usr/bin"
+        CHROME_INSTALL_DIR = "${WORKSPACE}/chrome"
     }
 
     stages {
@@ -52,14 +52,10 @@ pipeline {
                         x11-utils \
                         x11-xserver-utils
 
-                    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-                    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y
-
                     wget https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip
                     unzip -o chromedriver_linux64.zip -d ${CHROME_INSTALL_DIR}/
                     chmod +x ${CHROME_INSTALL_DIR}/chromedriver
                     rm chromedriver_linux64.zip
-                    rm google-chrome-stable_current_amd64.deb
                     '''
                 }
             }
@@ -83,6 +79,7 @@ pipeline {
                     echo 'Running unit and UI tests...'
                     sh '''#!/bin/bash
                     export DISPLAY=:99.0
+                    export PATH=${CHROME_INSTALL_DIR}:$PATH
                     nohup Xvfb :99 -ac &
                     sleep 3
                     echo "Installed Chrome version:"
