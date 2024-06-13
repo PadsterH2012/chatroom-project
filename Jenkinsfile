@@ -6,9 +6,15 @@ pipeline {
         DOCKER_IMAGE = 'padster2012/test-chat'
         CHROME_DRIVER_VERSION = '114.0.5735.90'
         CHROME_INSTALL_DIR = "${WORKSPACE}/chrome"
+        CHROME_BINARY = '/usr/bin/google-chrome'
     }
 
     stages {
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()  // Clean the workspace before starting the build
+            }
+        }
         stage('Checkout') {
             steps {
                 echo 'Checking out the source code...'
@@ -52,10 +58,14 @@ pipeline {
                         x11-utils \
                         x11-xserver-utils
 
+                    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+                    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y
+
                     wget https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip
                     unzip -o chromedriver_linux64.zip -d ${CHROME_INSTALL_DIR}/
                     chmod +x ${CHROME_INSTALL_DIR}/chromedriver
                     rm chromedriver_linux64.zip
+                    rm google-chrome-stable_current_amd64.deb
                     '''
                 }
             }
@@ -79,47 +89,52 @@ pipeline {
                     echo 'Running unit and UI tests...'
                     sh '''#!/bin/bash
                     export DISPLAY=:99.0
-                    export PATH=${CHROME_INSTALL_DIR}:$PATH
                     nohup Xvfb :99 -ac &
                     sleep 3
                     echo "Installed Chrome version:"
-                    /usr/bin/google-chrome --version
+                    ${CHROME_BINARY} --version
                     echo "Running tests..."
-                    ./venv/bin/python -m unittest discover -s tests -p "*.py"
+                    set +e  # Allow the script to continue even if tests fail
+                    ./venv/bin/python -m unittest discover -s tests -p "*.py" > test_results.log
+                    TEST_RESULT=$?
+                    set -e  # Re-enable exit on error
+                    cat test_results.log
+                    exit $TEST_RESULT
                     '''
                 }
             }
         }
-        // stage('Build Docker Image') {
-        //     steps {
-        //         script {
-        //             echo 'Building Docker image...'
-        //             sh '''#!/bin/bash
-        //             docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
-        //             '''
-        //         }
-        //     }
-        // }
-        // stage('Push Docker Image') {
-        //     steps {
-        //         script {
-        //             echo 'Pushing Docker image to DockerHub...'
-        //             withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-        //                 sh '''#!/bin/bash
-        //                 echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-        //                 docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
-        stage('Stop Application') {
+        stage('Cleanup') {
             steps {
                 script {
-                    echo 'Stopping application...'
+                    echo 'Cleaning up...'
                     sh '''#!/bin/bash
                     pkill -f "python app.py"
+                    rm -rf venv
                     '''
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo 'Building Docker image...'
+                    sh '''#!/bin/bash
+                    docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                    '''
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo 'Pushing Docker image to DockerHub...'
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh '''#!/bin/bash
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                        '''
+                    }
                 }
             }
         }
