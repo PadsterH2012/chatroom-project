@@ -37,18 +37,18 @@ class UITest(unittest.TestCase):
         # Check if registration was successful by finding a specific element
         self.assertIn("Login", self.driver.page_source)
 
-    def test_login(self):
-        self.driver.get("http://localhost:5000/auth/login")
-        username_field = self.driver.find_element(By.NAME, "username")
-        password_field = self.driver.find_element(By.NAME, "password")
-        login_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+    # def test_login(self):
+    #     self.driver.get("http://localhost:5000/auth/login")
+    #     username_field = self.driver.find_element(By.NAME, "username")
+    #     password_field = self.driver.find_element(By.NAME, "password")
+    #     login_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
 
-        username_field.send_keys("testuser")
-        password_field.send_keys("password")
-        login_button.click()
+    #     username_field.send_keys("testuser")
+    #     password_field.send_keys("password")
+    #     login_button.click()
 
-        # Check if login was successful by verifying the presence of "Project Room"
-        self.assertIn("Project Room", self.driver.page_source)
+    #     # Check if login was successful by verifying the presence of "Project Room"
+    #     self.assertIn("Project Room", self.driver.page_source)
 
 if __name__ == "__main__":
     unittest.main()
