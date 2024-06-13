@@ -9,7 +9,7 @@ class UITest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         options = Options()
-        options.binary_location = "google-chrome/opt/google/chrome/"  # Specify the path to the Chrome binary
+        options.binary_location = "/usr/bin/google-chrome"  # Specify the path to the Chrome binary
         options.headless = True
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
