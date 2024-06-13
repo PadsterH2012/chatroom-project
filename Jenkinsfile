@@ -23,49 +23,14 @@ pipeline {
                 }
             }
         }
-        // stage('Install Chrome and Dependencies') {
-        //     steps {
-        //         script {
-        //             echo 'Installing Chrome and necessary dependencies...'
-        //             sh '''#!/bin/bash
-        //             wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        //             sudo apt-get update
-        //             sudo apt-get install -y \
-        //                 wget \
-        //                 gnupg2 \
-        //                 unzip \
-        //                 libxpm4 \
-        //                 libxrender1 \
-        //                 libgtk2.0-0 \
-        //                 libnss3 \
-        //                 libgconf-2-4 \
-        //                 xvfb \
-        //                 gtk2-engines-pixbuf \
-        //                 xfonts-cyrillic \
-        //                 xfonts-100dpi \
-        //                 xfonts-75dpi \
-        //                 xfonts-base \
-        //                 xfonts-scalable \
-        //                 imagemagick \
-        //                 x11-apps \
-        //                 x11-utils \
-        //                 x11-xserver-utils
-        //             sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
-        //             wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-        //             unzip chromedriver_linux64.zip
-        //             sudo mv chromedriver /usr/local/bin/
-        //             sudo chmod +x /usr/local/bin/chromedriver
-        //             '''
-        //         }
-        //     }
-        // }
-        stage('Install Dependencies') {
+        stage('Install Chrome and Dependencies') {
             steps {
                 script {
-                    echo 'Installing Necessary dependencies...'
+                    echo 'Installing Chrome and necessary dependencies...'
                     sh '''#!/bin/bash
-                    apt-get update
-                    apt-get install -y \
+                    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+                    sudo apt-get update
+                    sudo apt-get install -y \
                         wget \
                         gnupg2 \
                         unzip \
@@ -85,6 +50,13 @@ pipeline {
                         x11-apps \
                         x11-utils \
                         x11-xserver-utils
+                    sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
+                    rm google-chrome-stable_current_amd64.deb
+                    wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+                    unzip chromedriver_linux64.zip
+                    sudo mv chromedriver /usr/local/bin/
+                    sudo chmod +x /usr/local/bin/chromedriver
+                    rm chromedriver_linux64.zip
                     '''
                 }
             }
