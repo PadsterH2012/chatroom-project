@@ -23,27 +23,23 @@ pipeline {
                 }
             }
         }
-        // stage('Install Chrome and ChromeDriver') {
-        //     steps {
-        //         script {
-        //             echo 'Installing Chrome and ChromeDriver...'
-        //             sh '''#!/bin/bash
-        //             wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        //             dpkg -x google-chrome-stable_current_amd64.deb google-chrome
-        //             mv google-chrome/opt/google/chrome/chrome /usr/local/bin/
-
-        //             // wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-        //             // unzip chromedriver_linux64.zip
-        //             // mv chromedriver /usr/local/bin/
-        //             // chmod +x /usr/local/bin/chromedriver
-        //             '''
-        //         }
-        //     }
-        // }
-        stage('Run Unit Tests') {
+        stage('Start Application') {
             steps {
                 script {
-                    echo 'Running unit tests...'
+                    echo 'Starting the Python application...'
+                    sh '''#!/bin/bash
+                    source ./venv/bin/activate
+                    python app.py &
+                    '''
+                    // Give the app some time to start
+                    sleep 10
+                }
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo 'Running unit and UI tests...'
                     sh './venv/bin/python -m unittest discover -s tests -p "*.py"'
                 }
             }
@@ -71,31 +67,12 @@ pipeline {
                 }
             }
         }
-        stage('Start Application') {
-            steps {
-                script {
-                    echo 'Starting application...'
-                    sh '''#!/bin/bash
-                    docker run -d --name my_app -p 5000:5000 ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                    '''
-                }
-            }
-        }
-        stage('Run UI Tests') {
-            steps {
-                script {
-                    echo 'Running UI tests...'
-                    sh './venv/bin/python -m unittest discover -s tests -p "test_ui.py"'
-                }
-            }
-        }
         stage('Stop Application') {
             steps {
                 script {
                     echo 'Stopping application...'
                     sh '''#!/bin/bash
-                    docker stop my_app
-                    docker rm my_app
+                    pkill -f "python app.py"
                     '''
                 }
             }
