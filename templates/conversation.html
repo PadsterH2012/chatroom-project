@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ project.name }} - Conversation{% endblock %}
+{% block title %}Conversation{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -8,11 +8,24 @@
         <div class="conversation-window" id="conversation-window">
             {% for message in messages %}
             <div class="message {{ 'agent-message' if message.agent_id else 'user-message' }}">
-                {% if message.agent %}
-                <div class="agent-name">{{ message.agent.name }}</div>
+                {% if message.agent_id %}
+                <div class="avatar">
+                    <img src="{{ url_for('static', filename='avatars/' ~ agents_dict[message.agent_id].name ~ '.png') }}" alt="{{ agents_dict[message.agent_id].name }}">
+                </div>
+                <div class="message-text">
+                    <div class="agent-name">{{ agents_dict[message.agent_id].name }}</div>
+                    {{ message.text|safe }}
+                    <span class="timestamp">{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                </div>
+                {% else %}
+                <div class="message-text">
+                    {{ message.text|safe }}
+                    <span class="timestamp">{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                </div>
+                <div class="avatar">
+                    <img src="{{ url_for('static', filename='avatars/user.png') }}" alt="User">
+                </div>
                 {% endif %}
-                <span>{{ message.text|safe }}</span>
-                <span class="timestamp">{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span>
             </div>
             {% endfor %}
         </div>
@@ -34,7 +47,7 @@
         <h2>Project Details</h2>
         <div class="ingest-section">
             <button type="button" onclick="ingestProject()">Ingest</button>
-            <div class="status-indicator {{ 'green' if status_class == 'success' else 'red' }}"></div>
+            <div class="status-indicator {{ status_class }}"></div>
         </div>
         <div class="section">
             <p><strong>Project Name:</strong> {{ project.name }}</p>
@@ -84,6 +97,9 @@
             });
             block.parentElement.appendChild(copyButton);
         });
+
+        const conversationWindow = document.getElementById('conversation-window');
+        conversationWindow.scrollTop = conversationWindow.scrollHeight;
     });
 
     document.getElementById('agent').addEventListener('change', (event) => {
@@ -129,13 +145,19 @@
                         // Append user message
                         const userMessage = document.createElement('div');
                         userMessage.classList.add('message', 'user-message');
-                        userMessage.innerHTML = `${message} <span class="timestamp">${new Date().toLocaleString()}</span>`;
+                        userMessage.innerHTML = `
+                            <div class="message-text">${message} <span class="timestamp">${new Date().toLocaleString()}</span></div>
+                            <div class="avatar"><img src="{{ url_for('static', filename='avatars/user.png') }}" alt="User"></div>
+                        `;
                         conversationWindow.appendChild(userMessage);
 
                         // Append agent response
                         const agentMessage = document.createElement('div');
                         agentMessage.classList.add('message', 'agent-message');
-                        agentMessage.innerHTML = `<div class="agent-name">${data.agent_name}</div>${formatAIResponse(data.reply)}`;
+                        agentMessage.innerHTML = `
+                            <div class="avatar"><img src="${url_for('static', {'filename': 'avatars/' + data.agent_name + '.png'})}" alt="${data.agent_name}"></div>
+                            <div class="message-text"><div class="agent-name">${data.agent_name}</div>${formatAIResponse(data.reply)}</div>
+                        `;
                         conversationWindow.appendChild(agentMessage);
 
                         conversationWindow.scrollTop = conversationWindow.scrollHeight;

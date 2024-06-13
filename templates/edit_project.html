@@ -5,7 +5,7 @@
 {% block content %}
 <div class="edit-project-container edit-project-full-width">
     <h2 class="edit-project-title">Edit Project</h2>
-    <form method="POST" action="{{ url_for('edit_project', project_id=project.id) }}" class="edit-project-form">
+    <form method="POST" action="{{ url_for('project.edit_project', project_id=project.id) }}" class="edit-project-form">
         {{ form.hidden_tag() }}
         <div class="edit-project-form-group">
             {{ form.name.label }}

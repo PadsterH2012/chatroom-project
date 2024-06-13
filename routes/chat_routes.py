@@ -1,11 +1,24 @@
-from flask import Blueprint, request, jsonify
+import requests
+from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
-from models import db, Project, Agent, Conversation, Message, Config
+from models import db, Project, Conversation, Message, Agent, Config
 from datetime import datetime
-import json
 import logging
+import json
 
 chat_bp = Blueprint('chat', __name__)
+
+@chat_bp.route('/project/<int:project_id>', methods=['GET'])
+@login_required
+def conversation(project_id):
+    project = Project.query.get_or_404(project_id)
+    messages = Message.query.filter_by(conversation_id=project_id).order_by(Message.timestamp).all()
+    agents = Agent.query.all()
+    
+    # Create a dictionary of agents for easy access in the template
+    agents_dict = {agent.id: agent for agent in agents}
+
+    return render_template('conversation.html', project=project, messages=messages, agents=agents, agents_dict=agents_dict)
 
 @chat_bp.route('/send_message', methods=['POST'])
 @login_required
@@ -100,7 +113,7 @@ def send_message():
             db.session.add(agent_message)
             db.session.commit()
 
-            return jsonify({'reply': agent_reply})
+            return jsonify({'reply': agent_reply, 'agent_name': agent.name})
 
         except requests.RequestException as e:
             logging.error(f'Failed to communicate with agent: {str(e)}')
@@ -148,7 +161,7 @@ def send_message():
             db.session.add(agent_message)
             db.session.commit()
 
-            return jsonify({'reply': agent_reply.strip()})
+            return jsonify({'reply': agent_reply.strip(), 'agent_name': agent.name})
 
         except requests.RequestException as e:
             logging.error(f'Failed to communicate with agent: {str(e)}')

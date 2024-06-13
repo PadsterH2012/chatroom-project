@@ -46,6 +46,8 @@ def project_page(project_id):
     agents = Agent.query.all()
     messages = Message.query.filter_by(conversation_id=project_id).all()
 
+    agents_dict = {agent.id: agent for agent in agents}
+
     edit_git_url_form = EditGitUrlForm()
     if edit_git_url_form.validate_on_submit():
         project.git_url = edit_git_url_form.git_url.data
@@ -65,7 +67,7 @@ def project_page(project_id):
     clone_ingest_form = CloneIngestForm()
     status_class = request.args.get('status_class', 'green')
     status_message = request.args.get('status_message', 'Ingestion successful and recent')
-    return render_template('conversation.html', project=project, agents=agents, messages=messages, code_files=code_files, edit_git_url_form=edit_git_url_form, clone_ingest_form=clone_ingest_form, status_class=status_class, status_message=status_message)
+    return render_template('conversation.html', project=project, agents=agents, messages=messages, code_files=code_files, edit_git_url_form=edit_git_url_form, clone_ingest_form=clone_ingest_form, status_class=status_class, status_message=status_message, agents_dict=agents_dict)
 
 @project_bp.route('/project/<int:project_id>/edit', methods=['GET', 'POST'])
 @login_required
