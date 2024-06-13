@@ -30,7 +30,7 @@ class UITest(unittest.TestCase):
         self.driver.get("http://localhost:5000/auth/login")
         username_field = self.driver.find_element(By.NAME, "username")
         password_field = self.driver.find_element(By.NAME, "password")
-        login_button = self.driver.find_element(By.NAME, "submit")
+        login_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
 
         username_field.send_keys("testuser")
         password_field.send_keys("password")
