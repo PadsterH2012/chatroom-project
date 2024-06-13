@@ -24,7 +24,7 @@ class UITest(unittest.TestCase):
 
     def test_load_page(self):
         self.driver.get("http://localhost:5000/")
-        self.assertIn("Welcome to the Project Management App", self.driver.title)
+        self.assertIn("Home", self.driver.title)
 
     def test_login(self):
         self.driver.get("http://localhost:5000/auth/login")
