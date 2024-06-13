@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         DOCKER_IMAGE = 'padster2012/test-chat'
+        CHROME_DRIVER_VERSION = '114.0.5735.90'
     }
 
     stages {
@@ -29,8 +30,8 @@ pipeline {
                     echo 'Installing Chrome and necessary dependencies...'
                     sh '''#!/bin/bash
                     wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-                    sudo apt-get update
-                    sudo apt-get install -y \
+                    apt-get update
+                    apt-get install -y \
                         wget \
                         gnupg2 \
                         unzip \
@@ -50,12 +51,13 @@ pipeline {
                         x11-apps \
                         x11-utils \
                         x11-xserver-utils
-                    sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
-                    rm google-chrome-stable_current_amd64.deb
-                    wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+                    dpkg -x google-chrome-stable_current_amd64.deb google-chrome
+                    mv google-chrome/opt/google/chrome/* /usr/local/bin/
+                    rm -rf google-chrome google-chrome-stable_current_amd64.deb
+                    wget https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip
                     unzip chromedriver_linux64.zip
-                    sudo mv chromedriver /usr/local/bin/
-                    sudo chmod +x /usr/local/bin/chromedriver
+                    mv chromedriver /usr/local/bin/
+                    chmod +x /usr/local/bin/chromedriver
                     rm chromedriver_linux64.zip
                     '''
                 }
@@ -81,6 +83,7 @@ pipeline {
                     sh '''#!/bin/bash
                     export DISPLAY=:99.0
                     nohup Xvfb :99 -ac &
+                    sleep 3
                     ./venv/bin/python -m unittest discover -s tests -p "*.py"
                     '''
                 }
