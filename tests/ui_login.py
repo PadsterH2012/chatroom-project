@@ -2,8 +2,10 @@ import unittest
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 class UITest(unittest.TestCase):
 
@@ -35,20 +37,23 @@ class UITest(unittest.TestCase):
         register_button.click()
 
         # Check if registration was successful by finding a specific element
-        self.assertIn("Login", self.driver.page_source)
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1")))
 
-    # def test_login(self):
-    #     self.driver.get("http://localhost:5000/auth/login")
-    #     username_field = self.driver.find_element(By.NAME, "username")
-    #     password_field = self.driver.find_element(By.NAME, "password")
-    #     login_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+    def test_login(self):
+        self.driver.get("http://localhost:5000/auth/login")
+        username_field = self.driver.find_element(By.NAME, "username")
+        password_field = self.driver.find_element(By.NAME, "password")
+        login_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
 
-    #     username_field.send_keys("testuser")
-    #     password_field.send_keys("password")
-    #     login_button.click()
+        username_field.send_keys("testuser")
+        password_field.send_keys("password")
+        login_button.click()
 
-    #     # Check if login was successful by verifying the presence of "Project Room"
-    #     self.assertIn("Project Room", self.driver.page_source)
+        # Explicitly wait for the "Project Room" text to appear after login
+        WebDriverWait(self.driver, 10).until(EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Project Room"))
+
+        # Check if login was successful by verifying the presence of "Project Room"
+        self.assertIn("Project Room", self.driver.page_source)
 
 if __name__ == "__main__":
     unittest.main()
