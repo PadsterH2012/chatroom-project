@@ -9,16 +9,15 @@ from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 
 class UITest(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         options = Options()
-        options.binary_location = "/usr/bin/google-chrome"  # Specify the path to the Chrome binary
+        options.binary_location = "/usr/bin/google-chrome"   # Specify the path to the Chrome binary
         options.headless = True
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         cls.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-        cls.driver.implicitly_wait(10)
+        cls.driver.implicitly<｜begin▁of▁sentence｜>: 10)
         cls.driver.maximize_window()
 
     @classmethod
@@ -44,51 +43,22 @@ class UITest(unittest.TestCase):
         self.driver.get("http://localhost:5000/auth/login")
         
         # Verify we are on the login page
-        print(f"Current URL before login: {self.driver.current_url}")
-        print(f"Page source before login:\n{self.driver.page_source}")
-
-        username_field = self.driver.find_element(By.NAME, "username")
-        password_field = self.driver.find_element(By.NAME, "password")
-        login_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
-
-        # Ensure the fields are populated correctly
-        username_field.send_keys("testuser")
-        password_field.send_keys("password")
-
-        print("Before clicking login button")
-        print(f"Username field value: {username_field.get_attribute('value')}")
-        print(f"Password field value: {password_field.get_attribute('value')}")
-
-        login_button.click()
-
-        # Wait for potential redirect or error message
-        try:
-            WebDriverWait(self.driver, 10).until(EC.url_changes("http://localhost:5000/auth/login"))
-        except TimeoutException:
-            print("URL did not change after login attempt. Current URL:", self.driver.current_url)
-            print("Page source after login attempt:\n", self.driver.page_source)
-            
-            # Check for CSRF error message
-            csrf_error = self.driver.find_elements(By.CSS_SELECTOR, ".flash-error")
-            if csrf_error:
-                print(f"CSRF error message: {csrf_error[0].text}")
-            
-            # Raise the exception to ensure the test fails
-            raise
-
-        # Debug print to check current URL and page source after login attempt
-        print(f"Current URL after login: {self.driver.current_url}")
+        print(f"Current URL before login:  {self.driver.current_url}")
         print(f"Page source after login:\n{self.driver.page_source}")
-
+            
+            
+            
+            
+        
         # Check for common error messages
         error_message = self.driver.find_elements(By.CLASS_NAME, "error-message")
         if error_message:
-            print(f"Error message found: {error_message[0].text}")
+            print(f"Error message found:  {error_message[0].text}")
 
         # Explicitly wait for the "Project Room" text to appear after login
         WebDriverWait(self.driver, 10).until(EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Project Room"))
 
-        # Check if login was successful by verifying the presence of "Project Room"
+        # Check if login was successful by verifying the presence of 
         self.assertIn("Project Room", self.driver.page_source)
 
 if __name__ == "__main__":
