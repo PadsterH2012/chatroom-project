@@ -17,7 +17,7 @@ def project_room():
     clone_ingest_form = CloneIngestForm()
 
     if project_form.validate_on_submit() and 'create_project' in request.form:
-        new_project = Project(name=project_form.name.data, git_url=project_form.git_url.data)
+        new_project = Project(name=project_form.name.data, repository_url=project_form.repository_url.data)
         db.session.add(new_project)
         db.session.commit()
         flash('Project created successfully!', 'success')
@@ -50,7 +50,7 @@ def project_page(project_id):
 
     edit_git_url_form = EditGitUrlForm()
     if edit_git_url_form.validate_on_submit():
-        project.git_url = edit_git_url_form.git_url.data
+        project.repository_url = edit_git_url_form.repository_url.data
         db.session.commit()
         flash('Git URL updated successfully!', 'success')
         return redirect(url_for('project.project_page', project_id=project.id))
@@ -78,11 +78,11 @@ def edit_project(project_id):
     if form.validate_on_submit():
         project.name = form.name.data
         project.description = form.description.data
-        project.git_url = form.git_url.data
-        project.goals = form.goals.data
-        project.objectives = form.objectives.data
-        project.features = form.features.data
-        project.steps = form.steps.data
+        project.repository_url = form.repository_url.data
+        project.objective = form.objective.data
+        project.key_features_components = form.key_features_components.data
+        project.implementation_strategy = form.implementation_strategy.data
+        project.software_stack = form.software_stack.data
         db.session.commit()
         flash('Project updated successfully!', 'success')
         return redirect(url_for('project.project_page', project_id=project.id))
@@ -96,7 +96,7 @@ def clone_and_ingest(project_id):
     if form.validate_on_submit():
         project_url = form.project_url.data
         project = Project.query.get_or_404(project_id)
-        project.git_url = project_url
+        project.repository_url = project_url
         db.session.commit()
 
         logging.info(f"Cloning repository from {project_url}")

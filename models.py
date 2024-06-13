@@ -13,26 +13,27 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    objectives = db.Column(db.Text, nullable=True)
-    goals = db.Column(db.Text, nullable=True)
-    features = db.Column(db.Text, nullable=True)
-    steps = db.Column(db.Text, nullable=True)
+    repository_url = db.Column(db.String(256), nullable=True)
+    objective = db.Column(db.Text, nullable=True)
+    key_features_components = db.Column(db.Text, nullable=True)
+    implementation_strategy = db.Column(db.Text, nullable=True)
+    software_stack = db.Column(db.Text, nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
-    git_url = db.Column(db.String(256), nullable=True)
     ingested_code = db.Column(db.Text, nullable=True)
 
-    def __init__(self, name, description=None, objectives=None, goals=None, features=None, steps=None, start_date=None, end_date=None, git_url=None, ingested_code=None):
+    def __init__(self, name, description=None, repository_url=None, objective=None, key_features_components=None, implementation_strategy=None, software_stack=None, start_date=None, end_date=None, ingested_code=None):
         self.name = name
         self.description = description
-        self.objectives = objectives
-        self.goals = goals
-        self.features = features
-        self.steps = steps
+        self.repository_url = repository_url
+        self.objective = objective
+        self.key_features_components = key_features_components
+        self.implementation_strategy = implementation_strategy
+        self.software_stack = software_stack
         self.start_date = start_date
         self.end_date = end_date
-        self.git_url = git_url
         self.ingested_code = ingested_code
+
 
 class Conversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)

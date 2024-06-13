@@ -3,40 +3,49 @@
 {% block title %}Edit Project{% endblock %}
 
 {% block content %}
-<div class="edit-project-container edit-project-full-width">
+<div class="edit-project-container">
     <h2 class="edit-project-title">Edit Project</h2>
     <form method="POST" action="{{ url_for('project.edit_project', project_id=project.id) }}" class="edit-project-form">
         {{ form.hidden_tag() }}
+        
         <div class="edit-project-form-group">
             {{ form.name.label }}
-            {{ form.name }}
+            {{ form.name(class="edit-project-full-width") }}
         </div>
         <div class="edit-project-form-group">
             {{ form.description.label }}
-            {{ form.description }}
+            {{ form.description(class="edit-project-full-width") }}
         </div>
         <div class="edit-project-form-group">
-            {{ form.git_url.label }}
-            {{ form.git_url }}
+            {{ form.repository_url.label }}
+            {{ form.repository_url(class="edit-project-full-width") }}
         </div>
         <div class="edit-project-form-group">
-            {{ form.goals.label }}
-            {{ form.goals }}
+            {{ form.objective.label }}
+            {{ form.objective(class="edit-project-full-width") }}
         </div>
         <div class="edit-project-form-group">
-            {{ form.objectives.label }}
-            {{ form.objectives }}
+            {{ form.key_features_components.label }}
+            {{ form.key_features_components(class="edit-project-full-width") }}
         </div>
         <div class="edit-project-form-group">
-            {{ form.features.label }}
-            {{ form.features }}
+            {{ form.implementation_strategy.label }}
+            {{ form.implementation_strategy(class="edit-project-full-width") }}
         </div>
         <div class="edit-project-form-group">
-            {{ form.steps.label }}
-            {{ form.steps }}
+            {{ form.software_stack.label }}
+            {{ form.software_stack(class="edit-project-full-width") }}
         </div>
         <div class="edit-project-form-group">
-            {{ form.submit }}
+            {{ form.start_date.label }}
+            {{ form.start_date(class="edit-project-full-width") }}
+        </div>
+        <div class="edit-project-form-group">
+            {{ form.end_date.label }}
+            {{ form.end_date(class="edit-project-full-width") }}
+        </div>
+        <div class="edit-project-form-group">
+            <button type="submit">{{ form.submit.label }}</button>
         </div>
     </form>
 </div>
