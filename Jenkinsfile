@@ -32,10 +32,10 @@ pipeline {
                     dpkg -x google-chrome-stable_current_amd64.deb google-chrome
                     mv google-chrome/opt/google/chrome/chrome /usr/local/bin/
 
-                    wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-                    unzip chromedriver_linux64.zip
-                    mv chromedriver /usr/local/bin/
-                    chmod +x /usr/local/bin/chromedriver
+                    // wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+                    // unzip chromedriver_linux64.zip
+                    // mv chromedriver /usr/local/bin/
+                    // chmod +x /usr/local/bin/chromedriver
                     '''
                 }
             }
