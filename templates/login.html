@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <h1>Login</h1>
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('auth.login') }}">
             {{ form.hidden_tag() }}
             <div>
                 {{ form.username.label }}
@@ -24,7 +24,7 @@
                 <button type="submit">{{ form.submit.label }}</button>
             </div>
         </form>
-        <a href="{{ url_for('register') }}">Register</a>
+        <a href="{{ url_for('auth.register') }}">Register</a>
     </div>
 </body>
 </html>

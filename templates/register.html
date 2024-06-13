@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1>Register</h1>
-        <form method="POST" action="{{ url_for('register') }}">
+        <form method="POST" action="{{ url_for('auth.register') }}">
             {{ form.hidden_tag() }}
             <div>
                 {{ form.username.label }}
@@ -27,7 +27,7 @@
                 <button type="submit">{{ form.submit.label }}</button>
             </div>
         </form>
-        <a href="{{ url_for('login') }}">Already have an account? Log in here.</a>
+        <a href="{{ url_for('auth.login') }}">Already have an account? Log in here.</a>
     </div>
 </body>
 </html>
