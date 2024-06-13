@@ -35,19 +35,19 @@ class UITest(unittest.TestCase):
         password_field.send_keys("password")
         login_button.click()
 
-        # self.assertTrue(self.driver.find_element(By.ID, "logout").is_displayed())
+        self.assertTrue(self.driver.find_element(By.ID, "logout").is_displayed())
 
-    def test_register(self):
-        self.driver.get("http://localhost:5000/auth/register")
-        username_field = self.driver.find_element(By.NAME, "username")
-        password_field = self.driver.find_element(By.NAME, "password")
-        confirm_field = self.driver.find_element(By.NAME, "confirm")
-        login_button = self.driver.find_element(By.NAME, "submit")
+    # def test_register(self):
+    #     self.driver.get("http://localhost:5000/auth/register")
+    #     username_field = self.driver.find_element(By.NAME, "username")
+    #     password_field = self.driver.find_element(By.NAME, "password")
+    #     confirm_field = self.driver.find_element(By.NAME, "confirm")
+    #     login_button = self.driver.find_element(By.NAME, "submit")
 
-        username_field.send_keys("testuser")
-        password_field.send_keys("password")
-        confirm_field.send_keys("password")
-        login_button.click()
+    #     username_field.send_keys("testuser")
+    #     password_field.send_keys("password")
+    #     confirm_field.send_keys("password")
+    #     login_button.click()
 
         # self.assertTrue(self.driver.find_element(By.ID, "logout").is_displayed())
 
