@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 
 class UITest(unittest.TestCase):
@@ -66,6 +67,7 @@ class UITest(unittest.TestCase):
         except TimeoutException:
             print("URL did not change after login attempt. Current URL:", self.driver.current_url)
             print("Page source after login attempt:\n", self.driver.page_source)
+            raise
 
         # Debug print to check current URL and page source after login attempt
         print(f"Current URL after login: {self.driver.current_url}")
