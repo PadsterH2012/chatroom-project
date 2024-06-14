@@ -9,14 +9,6 @@
 <body>
     <div class="container">
         <h1>Register</h1>
-        <!-- Display flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
         <form method="POST" action="{{ url_for('auth.register') }}">
             {{ form.hidden_tag() }}
             <div>
@@ -35,7 +27,4 @@
                 <button type="submit">{{ form.submit.label }}</button>
             </div>
         </form>
-        <a href="{{ url_for('auth.login') }}">Already have an account? Log in here.</a>
-    </div>
-</body>
-</html>
+        <a href="{{ url_for('auth.login') }}">Already have
