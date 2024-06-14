@@ -1,3 +1,5 @@
+# project_routes.py
+
 import os
 import subprocess
 import logging
@@ -6,6 +8,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required
 from models import db, Project, Agent, Message, Conversation
 from forms import ProjectForm, EditProjectForm, DeleteProjectForm, CloneIngestForm, EditGitUrlForm
+from socketio_instance import socketio
 
 project_bp = Blueprint('project', __name__)
 
@@ -60,9 +63,9 @@ def project_page(project_id):
     if os.path.exists(project_dir):
         for root, dirs, files in os.walk(project_dir):
             for file in files:
-                if file.endswith('.py') or file.endswith('.txt') or file.endswith('.md'):
+                if file.endswith(('.py', '.txt', '.md', '.html', '.css', '.js')):
                     with open(os.path.join(root, file), 'r') as f:
-                        code_files.append({'filename': file, 'content': f.read()})
+                        code_files.append({'filename': os.path.relpath(os.path.join(root, file), project_dir), 'content': f.read()})
 
     clone_ingest_form = CloneIngestForm()
     status_class = request.args.get('status_class', 'green')
@@ -92,7 +95,6 @@ def edit_project(project_id):
 @project_bp.route('/clone_and_ingest/<int:project_id>', methods=['POST'])
 @login_required
 def clone_and_ingest(project_id):
-    from app import socketio  # Import socketio instance here to avoid circular import
     project = Project.query.get_or_404(project_id)
     project_url = project.repository_url
 
@@ -163,12 +165,36 @@ def read_project_files(project_id):
     code_contents = []
     for root, dirs, files in os.walk(project_dir):
         for file in files:
-            if file.endswith('.py') or file.endswith('.txt') or file.endswith('.md'):
+            if file.endswith(('.py', '.txt', '.md', '.html', '.css', '.js')):
                 with open(os.path.join(root, file), 'r') as f:
-                    code_contents.append({'filename': file, 'content': f.read()})
+                    code_contents.append({'filename': os.path.relpath(os.path.join(root, file), project_dir), 'content': f.read()})
     return code_contents
 
 def remove_repo(project_id):
     repo_dir = f"./repos/{project_id}"
     if os.path.exists(repo_dir):
         subprocess.run(['rm', '-rf', repo_dir], check=True)
+
+@project_bp.route('/create_folder_structure/<int:project_id>', methods=['POST'])
+@login_required
+def create_folder_structure(project_id):
+    data = request.json
+    base_path = data.get('base_path', '/workspace')
+    structure = data.get('structure')
+
+    if not structure:
+        return jsonify({'error': 'No structure provided'}), 400
+
+    project_path = os.path.join(base_path, f'project_{project_id}')
+
+    try:
+        for folder, files in structure.items():
+            folder_path = os.path.join(project_path, folder)
+            os.makedirs(folder_path, exist_ok=True)
+            for file in files:
+                file_path = os.path.join(folder_path, file)
+                open(file_path, 'a').close()  # Create an empty file
+        return jsonify({'status': 'Folder structure created successfully'}), 200
+    except Exception as e:
+        logging.error(f'Error creating folder structure: {str(e)}')
+        return jsonify({'error': f'Error creating folder structure: {str(e)}'}), 500
