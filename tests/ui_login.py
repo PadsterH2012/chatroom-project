@@ -1,7 +1,6 @@
 import unittest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 import time
@@ -26,9 +25,6 @@ class AuthTests(unittest.TestCase):
         
         time.sleep(2)  # Wait for the page to load and show the message
         
-        # Debug output
-        print(driver.page_source)
-        
         success_message = driver.find_element(By.TAG_NAME, 'body').text
         self.assertIn('Registration successful', success_message)
 
@@ -42,9 +38,6 @@ class AuthTests(unittest.TestCase):
         
         time.sleep(2)  # Wait for the page to load and show the message
         
-        # Debug output
-        print(driver.page_source)
-        
         welcome_message = driver.find_element(By.TAG_NAME, 'body').text
         self.assertIn('Welcome', welcome_message)
 
@@ -54,9 +47,6 @@ class AuthTests(unittest.TestCase):
         driver.find_element(By.LINK_TEXT, 'Logout').click()  # Update the selector if necessary
         
         time.sleep(2)  # Wait for the page to load and show the message
-        
-        # Debug output
-        print(driver.page_source)
         
         logout_message = driver.find_element(By.TAG_NAME, 'body').text
         self.assertIn('You have been logged out', logout_message)
