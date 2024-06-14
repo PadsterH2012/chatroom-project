@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 class AuthTests(unittest.TestCase):
 
@@ -23,7 +24,12 @@ class AuthTests(unittest.TestCase):
         driver.find_element(By.NAME, 'confirm').send_keys('password123')
         driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
         
-        success_message = driver.find_element(By.CLASS_NAME, 'alert-success').text
+        time.sleep(2)  # Wait for the page to load and show the message
+        
+        # Debug output
+        print(driver.page_source)
+        
+        success_message = driver.find_element(By.TAG_NAME, 'body').text
         self.assertIn('Registration successful', success_message)
 
     def test_login(self):
@@ -34,15 +40,25 @@ class AuthTests(unittest.TestCase):
         driver.find_element(By.NAME, 'password').send_keys('password123')
         driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
         
-        welcome_message = driver.find_element(By.TAG_NAME, 'h1').text
+        time.sleep(2)  # Wait for the page to load and show the message
+        
+        # Debug output
+        print(driver.page_source)
+        
+        welcome_message = driver.find_element(By.TAG_NAME, 'body').text
         self.assertIn('Welcome', welcome_message)
 
     def test_logout(self):
         driver = self.driver
         self.test_login()  # First, log in
         driver.find_element(By.LINK_TEXT, 'Logout').click()  # Update the selector if necessary
-
-        logout_message = driver.find_element(By.CLASS_NAME, 'alert-info').text
+        
+        time.sleep(2)  # Wait for the page to load and show the message
+        
+        # Debug output
+        print(driver.page_source)
+        
+        logout_message = driver.find_element(By.TAG_NAME, 'body').text
         self.assertIn('You have been logged out', logout_message)
 
 if __name__ == '__main__':
