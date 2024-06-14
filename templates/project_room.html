@@ -54,11 +54,11 @@
             {% endif %}
         </div>
         <div>
-            {{ project_form.git_url.label }}
-            {{ project_form.git_url }}
-            {% if project_form.git_url.errors %}
+            {{ project_form.repository_url.label }}
+            {{ project_form.repository_url }}
+            {% if project_form.repository_url.errors %}
                 <ul>
-                    {% for error in project_form.git_url.errors %}
+                    {% for error in project_form.repository_url.errors %}
                         <li style="color: red;">{{ error }}</li>
                     {% endfor %}
                 </ul>

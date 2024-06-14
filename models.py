@@ -20,7 +20,7 @@ class Project(db.Model):
     software_stack = db.Column(db.Text, nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
-    ingested_code = db.Column(db.Text, nullable=True)
+    ingested_code = db.Column(db.Text, nullable=True)  # Add this field
 
     def __init__(self, name, description=None, repository_url=None, objective=None, key_features_components=None, implementation_strategy=None, software_stack=None, start_date=None, end_date=None, ingested_code=None):
         self.name = name

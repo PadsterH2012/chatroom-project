@@ -37,6 +37,7 @@
         <div class="ingest-section">
             <button type="button" onclick="ingestProject()">Ingest</button>
             <div class="status-indicator {{ 'green' if status_class == 'success' else 'red' }}"></div>
+            <div id="progress-status">Waiting for progress updates...</div>
         </div>
         <div class="section">
             <p><strong>Project Name:</strong> {{ project.name }}</p>
@@ -50,7 +51,7 @@
         <div class="section">
             <p><strong>Objective:</strong> {{ project.objective or "No objective specified" }}</p>
         </div>
-        <div class="section">
+        <div class=" section">
             <p><strong>Key Features & Components:</strong> {{ project.key_features_components or "No key features or components listed" }}</p>
         </div>
         <div class="section">
@@ -63,6 +64,7 @@
     </div>
 </div>
 
+<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', (event) => {
         const lastSelectedAgent = localStorage.getItem('lastSelectedAgent');
@@ -71,7 +73,7 @@
         }
 
         document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightBlock(block);
+            hljs.highlightElement(block);
 
             // Add copy button
             const copyButton = document.createElement('button');
@@ -152,7 +154,7 @@
 
                         // Re-run highlight.js on new code blocks
                         document.querySelectorAll('pre code').forEach((block) => {
-                            hljs.highlightBlock(block);
+                            hljs.highlightElement(block);
 
                             // Add copy button
                             const copyButton = document.createElement('button');
@@ -176,16 +178,27 @@
     }
 
     function ingestProject() {
-        const projectId = {{ project.id }};
-        const payload = { project_id: projectId };
+        const socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + '/progress');
+
+        socket.on('connect', function() {
+            console.log('WebSocket connected');
+        });
+
+        socket.on('disconnect', function() {
+            console.log('WebSocket disconnected');
+        });
+
+        socket.on('progress', function(data) {
+            console.log(data.status);
+            document.getElementById('progress-status').innerText = data.status;
+        });
 
         fetch('{{ url_for('project.clone_and_ingest', project_id=project.id) }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(payload)
+                }
             })
             .then(response => response.json())
             .then(data => {

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify  # Add jsonify here
 from flask_login import login_required
 from forms import ProjectForm, EditProjectForm, DeleteProjectForm, CloneIngestForm, EditGitUrlForm
 from models import db, Project, Agent, Message, Conversation
@@ -6,9 +6,12 @@ import os
 import subprocess
 import logging
 import json
+from utils import clone_repo, read_project_files, remove_repo
+from socketio_instance import socketio
 
 project_bp = Blueprint('project', __name__)
 
+# Define routes here
 @project_bp.route('/project_room', methods=['GET', 'POST'])
 @login_required
 def project_room():
@@ -60,7 +63,7 @@ def project_page(project_id):
     if os.path.exists(project_dir):
         for root, dirs, files in os.walk(project_dir):
             for file in files:
-                if file.endswith('.py') or file.endswith('.txt') or file.endswith('.md'):
+                if file.endswith(('.py', '.js', '.css', '.html', '.txt', '.md')):
                     with open(os.path.join(root, file), 'r') as f:
                         code_files.append({'filename': file, 'content': f.read()})
 
@@ -92,65 +95,35 @@ def edit_project(project_id):
 @project_bp.route('/clone_and_ingest/<int:project_id>', methods=['POST'])
 @login_required
 def clone_and_ingest(project_id):
-    form = CloneIngestForm()
-    if form.validate_on_submit():
-        project_url = form.project_url.data
-        project = Project.query.get_or_404(project_id)
-        project.repository_url = project_url
-        db.session.commit()
-
-        logging.info(f"Cloning repository from {project_url}")
-        clone_result = clone_repository(project_url, project_id)
-        if clone_result:
-            logging.info("Repository cloned successfully. Starting ingestion.")
-            ingest_result = ingest_repository(project_id)
-            if ingest_result:
-                flash('Repository cloned and ingested successfully', 'success')
-                status_class = 'green'
-                status_message = 'Ingestion successful and recent'
-            else:
-                flash('Repository ingestion failed', 'error')
-                status_class = 'red'
-                status_message = 'Ingestion failed or outdated'
-        else:
-            flash('Repository cloning failed', 'error')
-            status_class = 'red'
-            status_message = 'Cloning failed or outdated'
-    else:
-        flash('Invalid project URL', 'error')
-        status_class = 'red'
-        status_message = 'Invalid project URL'
-    return redirect(url_for('project.project_page', project_id=project_id, status_class=status_class, status_message=status_message))
-
-def clone_repository(project_url, project_id):
-    try:
-        repo_dir = f"./repos/{project_id}"
-        if os.path.exists(repo_dir):
-            logging.info(f"Removing existing directory {repo_dir}")
-            subprocess.run(['rm', '-rf', repo_dir], check=True)
-        logging.info(f"Cloning repository to {repo_dir}")
-        subprocess.run(['git', 'clone', project_url, repo_dir], check=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Cloning failed: {str(e)}")
-        return False
-
-def ingest_repository(project_id):
-    project_dir = f"./repos/{project_id}"
-    if not os.path.exists(project_dir):
-        logging.error(f"Repository directory {project_dir} does not exist")
-        return False
-
-    code_contents = []
-    for root, dirs, files in os.walk(project_dir):
-        for file in files:
-            if file.endswith('.py') or file.endswith('.txt') or file.endswith('.md'):
-                with open(os.path.join(root, file), 'r') as f:
-                    code_contents.append(f.read())
-
-    # Save ingested code to the database
     project = Project.query.get_or_404(project_id)
-    project.ingested_code = json.dumps(code_contents)
-    db.session.commit()
+    project_url = project.repository_url
 
-    return True
+    if project_url:
+        try:
+            # Step 1: Cloning the repository
+            socketio.emit('progress', {'status': 'Downloading from repository...'}, namespace='/progress')
+            clone_repo(project_url, project_id)
+
+            # Step 2: Reading project files
+            socketio.emit('progress', {'status': 'Reading project files...'}, namespace='/progress')
+            code_contents = read_project_files(project_id)
+
+            # Step 3: Saving to the database
+            socketio.emit('progress', {'status': 'Adding to database...'}, namespace='/progress')
+            project.ingested_code = json.dumps(code_contents)
+            db.session.commit()
+
+            # Step 4: Removing the repository folder
+            socketio.emit('progress', {'status': 'Removing temporary files...'}, namespace='/progress')
+            remove_repo(project_id)
+            socketio.emit('progress', {'status': 'Repository cloned and ingested successfully'}, namespace='/progress')
+            flash('Repository cloned and ingested successfully', 'success')
+            return jsonify({'success': True})
+        except Exception as e:
+            socketio.emit('progress', {'status': f'Error: {str(e)}'}, namespace='/progress')
+            flash(f'Error during cloning and ingestion: {str(e)}', 'error')
+            return jsonify({'success': False, 'error': str(e)})
+    else:
+        socketio.emit('progress', {'status': 'Repository URL not provided'}, namespace='/progress')
+        flash('Repository URL not provided', 'error')
+        return jsonify({'success': False, 'error': 'Repository URL not provided'})
