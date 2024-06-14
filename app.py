@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
-from flask_socketio import SocketIO, emit, join_room, leave_room  # Import emit here
+from flask_socketio import SocketIO, emit
 
 # Add the root directory of your project to the Python path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -27,8 +27,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
-from socketio_instance import socketio  # Import socketio instance from the new module
-socketio.init_app(app)
+# Initialize SocketIO
+socketio = SocketIO(app)
 
 @login_manager.user_loader
 def load_user(user_id):

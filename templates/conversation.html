@@ -51,7 +51,7 @@
         <div class="section">
             <p><strong>Objective:</strong> {{ project.objective or "No objective specified" }}</p>
         </div>
-        <div class=" section">
+        <div class="section">
             <p><strong>Key Features & Components:</strong> {{ project.key_features_components or "No key features or components listed" }}</p>
         </div>
         <div class="section">
@@ -73,7 +73,7 @@
         }
 
         document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
+            hljs.highlightBlock(block);
 
             // Add copy button
             const copyButton = document.createElement('button');
@@ -154,7 +154,7 @@
 
                         // Re-run highlight.js on new code blocks
                         document.querySelectorAll('pre code').forEach((block) => {
-                            hljs.highlightElement(block);
+                            hljs.highlightBlock(block);
 
                             // Add copy button
                             const copyButton = document.createElement('button');
