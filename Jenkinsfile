@@ -36,8 +36,8 @@ pipeline {
                 script {
                     echo 'Installing Chrome and necessary dependencies...'
                     sh '''#!/bin/bash
-                    apt-get update
-                    apt-get install -y \
+                    sudo apt-get update
+                    sudo apt-get install -y \
                         wget \
                         gnupg2 \
                         unzip \
@@ -59,7 +59,7 @@ pipeline {
                         x11-xserver-utils
 
                     wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-                    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y
+                    sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
 
                     wget https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip
                     unzip -o chromedriver_linux64.zip -d ${CHROME_INSTALL_DIR}/
