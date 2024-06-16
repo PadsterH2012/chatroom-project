@@ -27,7 +27,7 @@ pipeline {
                     echo 'Setting up Python environment...'
                     sh 'python3 -m venv venv'
                     sh './venv/bin/pip install -r requirements.txt'
-                    sh './venv/bin/pip install selenium webdriver-manager'
+                    sh './venv/bin/pip install Flask selenium webdriver-manager'
                 }
             }
         }
@@ -57,7 +57,9 @@ pipeline {
                             imagemagick \
                             x11-apps \
                             x11-utils \
-                            x11-xserver-utils
+                            x11-xserver-utils \
+                            python3-pip \
+                            python3-venv
 
                         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
                         echo $SUDO_PASSWORD | sudo -S dpkg -i google-chrome-stable_current_amd64.deb || echo $SUDO_PASSWORD | sudo -S apt-get -f install -y
@@ -72,13 +74,27 @@ pipeline {
                 }
             }
         }
+        stage('Setup Python Environment') {
+            steps {
+                script {
+                    echo 'Setting up Python virtual environment...'
+                    sh '''#!/bin/bash
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                    '''
+                }
+            }
+        }
         stage('Start Application') {
             steps {
                 script {
                     echo 'Starting the Python application...'
                     sh '''
+                    source venv/bin/activate
                     export DISPLAY=:0.0  # Ensure correct display is set
-                    nohup python3 app.py &
+                    nohup python app.py &
                     sleep 10  # Give the application time to start
                     '''
                 }
@@ -89,6 +105,7 @@ pipeline {
                 script {
                     echo 'Running unit and UI tests...'
                     sh '''#!/bin/bash
+                    source venv/bin/activate
                     export DISPLAY=:0.0  # Use the real display
                     echo "Installed Chrome version:"
                     google-chrome --version
