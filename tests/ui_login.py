@@ -9,14 +9,21 @@ class AuthTests(unittest.TestCase):
 
     def setUp(self):
         chrome_options = Options()
-        # Uncomment this line if you want to see the browser UI during tests
+        # Comment out the headless option to see the browser UI
         # chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--remote-debugging-port=9222")
+        chrome_options.add_argument("--start-maximized")
+        chrome_options.add_argument("--disable-extensions")
 
-        self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+        # Set up ChromeDriver with logging
+        chrome_service = ChromeService(ChromeDriverManager().install())
+        chrome_service.command_line_args().append("--verbose")
+        chrome_service.log_path = "/tmp/chromedriver.log"
+
+        self.driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
         self.driver.get("http://127.0.0.1:5000")
 
     def tearDown(self):
