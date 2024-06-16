@@ -31,45 +31,45 @@ pipeline {
                 }
             }
         }
-        stage('Install Chrome and Dependencies') {
-            steps {
-                script {
-                    echo 'Installing Chrome and necessary dependencies...'
-                    sh '''#!/bin/bash
-                    apt-get update
-                    apt-get install -y \
-                        wget \
-                        gnupg2 \
-                        unzip \
-                        libxpm4 \
-                        libxrender1 \
-                        libgtk2.0-0 \
-                        libnss3 \
-                        libgconf-2-4 \
-                        xvfb \
-                        gtk2-engines-pixbuf \
-                        xfonts-cyrillic \
-                        xfonts-100dpi \
-                        xfonts-75dpi \
-                        xfonts-base \
-                        xfonts-scalable \
-                        imagemagick \
-                        x11-apps \
-                        x11-utils \
-                        x11-xserver-utils
+        // stage('Install Chrome and Dependencies') {
+        //     steps {
+        //         script {
+        //             echo 'Installing Chrome and necessary dependencies...'
+        //             sh '''#!/bin/bash
+        //             apt-get update
+        //             apt-get install -y \
+        //                 wget \
+        //                 gnupg2 \
+        //                 unzip \
+        //                 libxpm4 \
+        //                 libxrender1 \
+        //                 libgtk2.0-0 \
+        //                 libnss3 \
+        //                 libgconf-2-4 \
+        //                 xvfb \
+        //                 gtk2-engines-pixbuf \
+        //                 xfonts-cyrillic \
+        //                 xfonts-100dpi \
+        //                 xfonts-75dpi \
+        //                 xfonts-base \
+        //                 xfonts-scalable \
+        //                 imagemagick \
+        //                 x11-apps \
+        //                 x11-utils \
+        //                 x11-xserver-utils
 
-                    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-                    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y
+        //             wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        //             dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y
 
-                    wget https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip
-                    unzip -o chromedriver_linux64.zip -d ${CHROME_INSTALL_DIR}/
-                    chmod +x ${CHROME_INSTALL_DIR}/chromedriver
-                    rm chromedriver_linux64.zip
-                    rm google-chrome-stable_current_amd64.deb
-                    '''
-                }
-            }
-        }
+        //             wget https://chromedriver.storage.googleapis.com/${CHROME_DRIVER_VERSION}/chromedriver_linux64.zip
+        //             unzip -o chromedriver_linux64.zip -d ${CHROME_INSTALL_DIR}/
+        //             chmod +x ${CHROME_INSTALL_DIR}/chromedriver
+        //             rm chromedriver_linux64.zip
+        //             rm google-chrome-stable_current_amd64.deb
+        //             '''
+        //         }
+        //     }
+        // }
         stage('Start Application') {
             steps {
                 script {
