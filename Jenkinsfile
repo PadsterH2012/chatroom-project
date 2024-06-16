@@ -76,12 +76,11 @@ pipeline {
             steps {
                 script {
                     echo 'Starting the Python application...'
-                    sh '''#!/bin/bash
-                    source ./venv/bin/activate
-                    nohup python app.py &
+                    sh '''
+                    export DISPLAY=:0.0  # Ensure correct display is set
+                    nohup python3 app.py &
+                    sleep 10  # Give the application time to start
                     '''
-                    // Give the app some time to start
-                    sleep 10
                 }
             }
         }
@@ -92,7 +91,7 @@ pipeline {
                     sh '''#!/bin/bash
                     export DISPLAY=:0.0  # Use the real display
                     echo "Installed Chrome version:"
-                    ${CHROME_BINARY} --version
+                    google-chrome --version
                     echo "Running tests..."
                     set +e  # Allow the script to continue even if tests fail
                     ./venv/bin/python -m unittest discover -s tests -p "*.py" > test_results.log
