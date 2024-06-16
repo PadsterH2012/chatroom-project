@@ -9,7 +9,7 @@ class AuthTests(unittest.TestCase):
 
     def setUp(self):
         chrome_options = Options()
-        # Comment out the headless option to see the browser UI
+        # Uncomment this line if you want to see the browser UI during tests
         # chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
