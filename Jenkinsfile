@@ -102,39 +102,39 @@ pipeline {
                 }
             }
         }
-        stage('Cleanup') {
-            steps {
-                script {
-                    echo 'Cleaning up...'
-                    sh '''#!/bin/bash
-                    pkill -f "python app.py"
-                    rm -rf venv
-                    '''
-                }
-            }
-        }
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    echo 'Building Docker image...'
-                    sh '''#!/bin/bash
-                    docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
-                    '''
-                }
-            }
-        }
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    echo 'Pushing Docker image to DockerHub...'
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh '''#!/bin/bash
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                        '''
-                    }
-                }
-            }
-        }
+        // stage('Cleanup') {
+        //     steps {
+        //         script {
+        //             echo 'Cleaning up...'
+        //             sh '''#!/bin/bash
+        //             pkill -f "python app.py"
+        //             rm -rf venv
+        //             '''
+        //         }
+        //     }
+        // }
+        // stage('Build Docker Image') {
+        //     steps {
+        //         script {
+        //             echo 'Building Docker image...'
+        //             sh '''#!/bin/bash
+        //             docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+        //             '''
+        //         }
+        //     }
+        // }
+        // stage('Push Docker Image') {
+        //     steps {
+        //         script {
+        //             echo 'Pushing Docker image to DockerHub...'
+        //             withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        //                 sh '''#!/bin/bash
+        //                 echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+        //                 docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
