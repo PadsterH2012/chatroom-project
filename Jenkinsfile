@@ -83,27 +83,25 @@ pipeline {
                 }
             }
         }
-        // stage('Run Tests') {
-        //     steps {
-        //         script {
-        //             echo 'Running unit and UI tests...'
-        //             sh '''#!/bin/bash
-        //             export DISPLAY=:99.0
-        //             nohup Xvfb :99 -ac &
-        //             sleep 3
-        //             echo "Installed Chrome version:"
-        //             ${CHROME_BINARY} --version
-        //             echo "Running tests..."
-        //             set +e  # Allow the script to continue even if tests fail
-        //             ./venv/bin/python -m unittest discover -s tests -p "*.py" > test_results.log
-        //             TEST_RESULT=$?
-        //             set -e  # Re-enable exit on error
-        //             cat test_results.log
-        //             exit $TEST_RESULT
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo 'Running unit and UI tests...'
+                    sh '''#!/bin/bash
+                    export DISPLAY=:0.0  # Use the real display
+                    echo "Installed Chrome version:"
+                    ${CHROME_BINARY} --version
+                    echo "Running tests..."
+                    set +e  # Allow the script to continue even if tests fail
+                    ./venv/bin/python -m unittest discover -s tests -p "*.py" > test_results.log
+                    TEST_RESULT=$?
+                    set -e  # Re-enable exit on error
+                    cat test_results.log
+                    exit $TEST_RESULT
+                    '''
+                }
+            }
+        }
         stage('Cleanup') {
             steps {
                 script {

@@ -12,7 +12,8 @@ class AuthTests(unittest.TestCase):
 
     def setUp(self):
         chrome_options = Options()
-        chrome_options.add_argument("--headless")
+        # Remove the headless option to see the browser UI
+        # chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
         self.driver.get("http://127.0.0.1:5000")
@@ -35,7 +36,9 @@ class AuthTests(unittest.TestCase):
         submit_button.click()
 
         # Check for success message
-        success_message = driver.find_element(By.CLASS_NAME, 'alert-success').text
+        success_message = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'alert-success'))
+        ).text
         self.assertIn('Registration successful', success_message)
 
     def test_login(self):
@@ -51,7 +54,9 @@ class AuthTests(unittest.TestCase):
         submit_button.click()
 
         # Check for welcome message
-        welcome_message = driver.find_element(By.TAG_NAME, "h1").text
+        welcome_message = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "h1"))
+        ).text
         self.assertIn('Welcome', welcome_message)
 
     def test_logout(self):
@@ -61,7 +66,9 @@ class AuthTests(unittest.TestCase):
         driver.find_element(By.LINK_TEXT, "Logout").click()
 
         # Check for login message
-        login_message = driver.find_element(By.TAG_NAME, "h1").text
+        login_message = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "h1"))
+        ).text
         self.assertIn('Login', login_message)
 
 if __name__ == "__main__":
